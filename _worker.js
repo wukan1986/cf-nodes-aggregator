@@ -1,24 +1,28 @@
-﻿
-/////////////////////////////////////////////////////
+﻿/////////////////////////////////////////////////////
 // 一般情况下，只有以下小部分代码需要修改定制
 /////////////////////////////////////////////////////
-const ECH = "cloudflare-ech.com+https://223.5.5.5/dns-query";
 const PATH = "/proxyip=proxyip.cmliussss.net";
 
-const CONVERT_URL = 'https://url.v1.mk';
+const CONVERT_URL = atob("aHR0cHM6Ly9zdWJhcGkuY21saXVzc3NzLm5ldA==");
 const CONFIG_URL = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini"
+
+const ECH_SNI = "cloudflare-ech.com";
+const ECH_FALLBACK = "https://223.5.5.5/dns-query";
+// 只要配置文件中，ech为真，就用ECH替代
+const ECH = `${ECH_SNI}+${ECH_FALLBACK}`;
 
 // TODO 列表，来源不同，解析方式也不同，需要自行修改
 async function fetch_addresses() {
 
-	// return await fetch_addresses_txt();
+	return await fetch_addresses_txt();
 
-	return await fetch_addresses_json();
+	// return await fetch_addresses_json();
 }
 
 // TODO 订阅优选IP列表，txt格式
 async function fetch_addresses_txt() {
 	const ip_list = await fetch("https://sub.995677.xyz/sub?joey").then(res => res.text());
+	// const ip_list = await fetch("https://cf.090227.xyz/cu").then(res => res.text());
 	return parseIpContent(ip_list);
 }
 // TODO 订阅优选IP列表，json格式
@@ -35,27 +39,33 @@ async function fetch_addresses_json() {
 /////////////////////////////////////////////////////
 // 一般情况下，只有以上小部分代码需要修改定制
 /////////////////////////////////////////////////////
+function stringToBoolean(str) {
+	if (!str) return false;
+	const s = str.toLowerCase().trim();
+	return s === "true" || s === "1" || s === "yes" || s === "on";
+}
+function parseProxyConfig(inputText) {
+	const lines = inputText.split('\n');
+	const result = [];
 
-function parseUUID_SNI(input) {
-	const lines = input.split('\n');
+	for (let line of lines) {
+		line = line.trim();
+		if (line === '' || line.startsWith('#')) {
+			continue;
+		}
 
-	return lines
-		// 过滤空行和只有空白字符的行
-		.filter(line => {
-			const trimmed = line.trim();
-			// 排除空行/空白行，以及以 // 或 # 开头的行
-			return trimmed !== '' && 
-			       !trimmed.startsWith('//') && 
-			       !trimmed.startsWith('#');
-		})
-		// 解析每一行
-		.map(line => {
-			// 按逗号分割，最多分割成两部分
-			const parts = line.split(',').map(part => part.trim());
-			return [parts[0], parts[1]];
-		})
-		// 过滤无效条目（缺少UUID或域名）
-		.filter(item => item[0] && item[1]);
+		const parts = line.split(',');
+		if (parts.length !== 4) {
+			console.warn(`忽略格式不正确的行: ${line}`);
+			continue;
+		}
+
+		// 5. 提取并清理字段（去除可能的首尾空格）
+		const [uuid, sni, path, ech] = parts.map(part => part.trim());
+		result.push({ uuid, sni, path: path || '/', ech: stringToBoolean(ech) });
+	}
+
+	return result;
 }
 
 function parseServerData(line, defaultPort = 443) {
@@ -102,11 +112,17 @@ function parseIpContent(content) {
 	return result;
 }
 
-function 生成协议链接(uuid, ip, port, sni, host, remark) {
-	const ech = encodeURIComponent(ECH);
-	const path = encodeURIComponent(PATH);
-	const comment = encodeURIComponent(`${uuid.slice(0, 4)}|${remark}`);
-	return `${atob('dmxlc3M=')}://${uuid}@${ip}:${port}?encryption=none&&security=tls&sni=${sni}&fp=chrome&ech=${ech}&type=ws&host=${host}&path=${path}#${comment}`;
+function 生成协议链接(uuid, ip, port, sni, host, remark, path, ech) {
+    const hash = `${uuid.slice(0, 4)}|${remark}`;
+    let url = `${atob('dmxlc3M=')}://${uuid}@${ip}:${port}?security=tls&type=ws&host=${host}&fp=chrome&sni=${sni}&encryption=none#${hash}`;
+    const url1 = new URL(url);
+    if (ech) url1.searchParams.set('ech', ECH);
+    if (path) {
+        const url2 = new URL(path, "http://127.0.0.1");
+        if (ech) url2.searchParams.set('ech', '1');
+        url1.searchParams.set('path', url2.pathname + url2.search + url2.hash);
+    }
+    return url1.href;
 }
 
 function 生成链接列表(addresses) {
@@ -115,8 +131,8 @@ function 生成链接列表(addresses) {
 	for (let i = 0; i < addresses.length; i++) {
 		const { ip, port, remark } = addresses[i];
 		// 从地址列表中循环获取uuid和sni
-		const [uuid, sni] = UUID_SNI[i % UUID_SNI.length];
-		const link = 生成协议链接(uuid, ip, port, sni, sni, remark);
+		const { uuid, sni, path, ech } = NODES[i % NODES.length];
+		const link = 生成协议链接(uuid, ip, port, sni, sni, remark, path, ech);
 		vv.push(link);
 	}
 
@@ -126,7 +142,7 @@ function 生成链接列表(addresses) {
 function 生成订阅链接(url) {
 	const encodedUrl = encodeURIComponent(url);
 	const encodedConfig = encodeURIComponent(CONFIG_URL);
-	return `${CONVERT_URL}/sub?target=clash&url=${encodedUrl}&insert=false&config=${encodedConfig}&emoji=false&list=false&xudp=false&udp=false&tfo=false&expand=true&scv=false&fdn=false&new_name=true`;
+	return `${CONVERT_URL}/sub?target=clash&url=${encodedUrl}&config=${encodedConfig}&emoji=false&scv=false`;
 }
 
 async function handle_raw() {
@@ -145,17 +161,67 @@ async function handle_sub(url) {
 	const origin = url.origin; // 获取当前服务器的源地址
 	const base64Url = `${origin}/base64`; // 构造/base64的完整URL
 	const sub_url = 生成订阅链接(base64Url)
+	const clash_url = `${origin}/clash`;
 
-	return new Response(sub_url, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>订阅链接</title></head>
+<body>
+    <h3>订阅链接</h3>
+    <p><strong>警告：</strong>通过以下链接订阅，ech 信息会丢失。部分节点开启 ech 无法上网</p>
+    <div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
+        ${sub_url}
+    </div>
+	<p><strong></strong>通过以下链接订阅，ech 信息会尝试修复</p>
+	<div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
+        ${clash_url}
+    </div>
+    <p>请复制上面的链接到您的客户端中使用</p>
+</body>
+</html>
+    `;
+
+	return new Response(htmlContent, {
+		headers: {
+			'Content-Type': 'text/html; charset=utf-8',
+			'Cache-Control': 'no-store',
+			'Expires': '0'
+		}
+	});
+}
+
+function modifyYamlProxies(yamlString) {
+	// 使用正则表达式找到每个代理配置的结束位置
+	const lines = yamlString.split('\n');
+	const result = [];
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+
+		// 检查是否是代理配置行
+		if (line.includes('ws-opts') && line.endsWith('}}') && line.includes('ech=1') && !line.includes('ech-opts')) {
+			// 在末尾添加 ech-opts
+			const modifiedLine = line.replace(/}}$/, `}, ech-opts: {enable: true, query-server-name: ${ECH_SNI}}}`);
+			result.push(modifiedLine);
+		} else {
+			result.push(line);
+		}
+	}
+
+	return result.join('\n');
 }
 
 async function handle_clash(url) {
 	const origin = url.origin; // 获取当前服务器的源地址
 	const base64Url = `${origin}/base64`; // 构造/base64的完整URL
 	const sub_url = 生成订阅链接(base64Url)
+	// 订阅转换ech丢失，需要后期添加
 	const content = await fetch(sub_url).then(res => res.text());
 
-	return new Response(content, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	const updatedYaml = modifyYamlProxies(content);
+
+	return new Response(updatedYaml, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
 // TODO 转发订阅，可用于添加UA
@@ -172,20 +238,22 @@ async function handle_fetch(url) {
 	return new Response(txt, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-let UUID_SNI = [];
+let NODES = [];
 
 export default {
 	async fetch(request, env, ctx) {
 		try {
 			// TODO 泄漏CF账号的数据，请自行修改
-			UUID_SNI = parseUUID_SNI(env.UUID_SNI || `
-				// https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-				00000000-0000-4000-8000-000000000000,xxx.eu.cc
+			NODES = parseProxyConfig(env.NODES || `
 
-				# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-				11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net
+# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
+00000000-0000-4000-8000-000000000000,xxx.eu.cc,/proxyip=proxyip.cmliussss.net,true
+
+# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
+11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,/proxyip=proxyip.cmliussss.net?ed=2095,false
+
 				`);
-			console.log(UUID_SNI);
+			console.log(NODES);
 		} catch (e) {
 			console.log(e);
 			return new Response(e.message, { status: 500 });

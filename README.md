@@ -6,23 +6,24 @@
 所以，我提供了一个工具，用来归集各组`UUID`和`SNI`，实现一个订阅，平均调用所有的节点
 
 ## 原理
-目前大家部署的`edgetunnel`和`cfnew`等项目，只要提供`uuid`和`sni`，就可以生成一个原地址的订阅链接
+目前大家部署的`edgetunnel`和`cfnew`等项目，只要提供`uuid`、`sni`等信息，就可以生成一个原地址的订阅链接
 只要将此链接中的`IP`地址修改成优选的IP或域名，就可以生成无数新地址，并且还能访问
 
 
 ## 部署方法
-1. 通过各种软件订阅`clash`或`v2ray`后，打开配置，找到`uuid`和`sni`。多记录一对就多`10w`每天
+1. 通过各种软件订阅`clash`或`v2ray`后，打开配置，找到`uuid`、`sni`、`path`和`ech`。多记录一组合就多`10w`每天
 2. 选择优选域名或优选IP的获取源，转换后的数据要求为`{ip,port,remark}`，如果缺`port`，则默认`443`，如果缺`remark`，则默认空
 3. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/v2ray`，查看效果
-4. 到`设置`->`变量和机密`，添加`文本`，变量名`UUID_SNI`，以`csv`格式填写，额外可以使用`//`或`#`开头进行注释。例如：
+4. 到`设置`->`变量和机密`，添加`文本`，变量名`NODES`，以`csv`格式填写，额外可以使用`#`开头进行注释。例如：
 ```csv
-// https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-00000000-0000-4000-8000-000000000000,xxx.eu.cc
+# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
+00000000-0000-4000-8000-000000000000,xxx.eu.cc,/proxyip=proxyip.cmliussss.net,true
 
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net
+11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,/proxyip=proxyip.cmliussss.net?ed=2095,false
 ```
-5. 注意：`Pages`部署方式需要再上传一次，对`UUID_SNI`的修改才会生效
+5. 四列分别为：`uuid`、`sni`、`path`、`ech`，`path`直接从配置文件中复制，`ech`表示是否要开启`ECH`，注意部分节点不支持
+6. 注意：`Pages`部署方式需要再上传一次，对`NODES`的修改才会生效
 
 ## 使用方法
 1. 访问 `https://*.pages.dev/v2ray`，可以查看生成的`v2ray`信息
@@ -49,6 +50,18 @@
 	1. 自己没域名，选`pages`，但每次修改变量要重新上传代码
 	2. `workers`修改调试方便，国内可搭配自定义域访问
 
+## ECH
+发现目前网络上提供的`v2ray`转`clash`的服务都会丢失`ech`信息，本工具会试着补全`ECH`信息，但需要配置文件的`ech`字段为`true`，
+底层会将`ech`信息保存在`path`字段，经过转换后，此字段还保留，可以被再次利用起来。
+
+`edgetunnel`和`cfnew`有对`DNS`覆写的功能，但改`yaml`实在麻烦，还是交给各软件的覆写吧
+
+### 检查浏览器ECH是否开启
+https://www.cloudflare-cn.com/ssl/encrypted-sni/#results
+
+### 浏览器ECH设置教程
+https://zhuanlan.zhihu.com/p/3739662610
+
 ## 参考学习
 1. [edgetunnel](https://github.com/cmliu/edgetunnel)
 2. [cfnew](https://github.com/byJoey/cfnew)
@@ -61,3 +74,6 @@
 3. 作者对任何滥用本项目代码导致的行为或后果均不承担任何责任。
 4. 本项目不对因使用代码引起的任何直接或间接损害负责。
 5. 建议在测试完成后 24 小时内删除本项目相关部署
+
+
+
