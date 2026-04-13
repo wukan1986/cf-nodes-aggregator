@@ -1,35 +1,18 @@
 ﻿
+/////////////////////////////////////////////////////
+// 一般情况下，只有以下小部分代码需要修改定制
+/////////////////////////////////////////////////////
 const ECH = "cloudflare-ech.com+https://223.5.5.5/dns-query";
 const PATH = "/proxyip=proxyip.cmliussss.net";
 
 const CONVERT_URL = 'https://url.v1.mk';
 const CONFIG_URL = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini"
 
-// TODO 泄漏CF账号的数据，请自行修改
-// TODO 泄漏CF账号的数据，请自行修改
-const UUID_SNI = [
-	// https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-	["0c16c03b-737f-4988-82b1-526a3efb43b0", "xxx.xxxx.de5.net"],
-	// https://xxx.xxxxxx.xxx.xxx/sub?token=58e44796ccb921da5a541b7974adccc
-	["00000000-0000-4000-8000-000000000000", "xxx.xxxxxx.xxx.xxx"],
-	// https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-	["2bd6ac11-906e-4bf4-8374-70298b0c8b60", "xxx.eu.cc"],
-];
-
-// TODO 转发订阅，可用于添加UA
-async function handle_ua() {
-	let txt = await fetch(
-		// 修改订阅地址
-		'https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf',
-		// 添加自定义UA
-		{ headers: { 'User-Agent': 'clash' } }
-	).then(response => response.text());
-
-	return new Response(txt, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
-}
 // TODO 列表，来源不同，解析方式也不同，需要自行修改
 async function fetch_addresses() {
+
 	// return await fetch_addresses_txt();
+
 	return await fetch_addresses_json();
 }
 
@@ -48,6 +31,31 @@ async function fetch_addresses_json() {
 		port: 443, // 从JSON中可以看出端口通常是443，但文档中没有port字段，所以默认使用443
 		remark: `${item.carrier}_${item.region}` // 格式为"carrier_region"
 	}));
+}
+/////////////////////////////////////////////////////
+// 一般情况下，只有以上小部分代码需要修改定制
+/////////////////////////////////////////////////////
+
+function parseUUID_SNI(input) {
+	const lines = input.split('\n');
+
+	return lines
+		// 过滤空行和只有空白字符的行
+		.filter(line => {
+			const trimmed = line.trim();
+			// 排除空行/空白行，以及以 // 或 # 开头的行
+			return trimmed !== '' && 
+			       !trimmed.startsWith('//') && 
+			       !trimmed.startsWith('#');
+		})
+		// 解析每一行
+		.map(line => {
+			// 按逗号分割，最多分割成两部分
+			const parts = line.split(',').map(part => part.trim());
+			return [parts[0], parts[1]];
+		})
+		// 过滤无效条目（缺少UUID或域名）
+		.filter(item => item[0] && item[1]);
 }
 
 function parseServerData(line, defaultPort = 443) {
@@ -150,8 +158,39 @@ async function handle_clash(url) {
 	return new Response(content, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
+// TODO 转发订阅，可用于添加UA
+async function handle_fetch(url) {
+	const targetUrl = url.searchParams.get('url');
+	const userAgent = url.searchParams.get('ua') || 'clash'; // 默认UA为clash
+	if (!targetUrl) {
+		return new Response('Missing url parameter', { status: 400 });
+	}
+	const decodedUrl = decodeURIComponent(targetUrl);
+
+	let txt = await fetch(decodedUrl, { headers: { 'User-Agent': userAgent } }).then(response => response.text());
+
+	return new Response(txt, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+}
+
+let UUID_SNI = [];
+
 export default {
 	async fetch(request, env, ctx) {
+		try {
+			// TODO 泄漏CF账号的数据，请自行修改
+			UUID_SNI = parseUUID_SNI(env.UUID_SNI || `
+				// https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
+				00000000-0000-4000-8000-000000000000,xxx.eu.cc
+
+				# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
+				11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net
+				`);
+			console.log(UUID_SNI);
+		} catch (e) {
+			console.log(e);
+			return new Response(e.message, { status: 500 });
+		}
+
 		const url = new URL(request.url);
 		const pathname = url.pathname;
 
@@ -167,8 +206,8 @@ export default {
 		if (pathname.startsWith('/clash')) {
 			return await handle_clash(url);
 		}
-		if (pathname.startsWith('/ua')) {
-			return await handle_ua();
+		if (pathname.startsWith('/fetch')) {
+			return await handle_fetch(url);
 		}
 
 		// You can view your logs in the Observability dashboard

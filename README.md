@@ -11,9 +11,18 @@
 
 
 ## 部署方法
-1. 通过各种软件订阅`clash`或`v2ray`后，打开配置，找到`uuid`和`sni`，记录到`_worker.js`中的`UUID_SNI`中。多记录一对就多`10w`每天
-2. 选择优选域名或优选IP的获取方式，转换后的数据要求为`{ip,port,remark}`，如果缺`port`，则默认`443`，如果缺`remark`，则默认空
-3. 将修改后的代码部署到`Cloudflare Workers/Pages`，然后就可以测试了
+1. 通过各种软件订阅`clash`或`v2ray`后，打开配置，找到`uuid`和`sni`。多记录一对就多`10w`每天
+2. 选择优选域名或优选IP的获取源，转换后的数据要求为`{ip,port,remark}`，如果缺`port`，则默认`443`，如果缺`remark`，则默认空
+3. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/v2ray`，查看效果
+4. 到`设置`->`变量和机密`，添加`文本`，变量名`UUID_SNI`，以`csv`格式填写，额外可以使用`//`或`#`开头进行注释。例如：
+```csv
+// https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
+00000000-0000-4000-8000-000000000000,xxx.eu.cc
+
+# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
+11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net
+```
+5. 注意：`Pages`部署方式需要再上传一次，对`UUID_SNI`的修改才会生效
 
 ## 使用方法
 1. 访问 `https://*.pages.dev/v2ray`，可以查看生成的`v2ray`信息
@@ -22,16 +31,20 @@
 4. 访问 `https://*.pages.dev/clash`，本质是返回了`clash`新订阅地址所获取的数据
 
 ## 额外功能
-1. 订阅时指定`UA`，解决部分软件不支持设置`UA`，但机场又有特殊需求的场景
-2. 修改`handle_ua`代码为机场地址，以及`User-Agent`
-3. 访问 `https://*.pages.dev/ua`，就为机场配置文件
+1. 订阅时指定`UA`，临时解决部分软件不支持自定义`UA`的场景
+2. 访问 `https://*.pages.dev/fetch?ua=clash&url=https://xxx.xxxx.de5.net/sub?token=xxxx`
+3. `ua`为指定的`User-Agent`，`url`为机场订阅地址
+4. 此功能也能解决部分订阅地址无法直接访问的的场景
 
 ## 其他问题
 1. `workers.dev`地址无法访问怎么办？
 	1. 临时可以科学上网，访问`https://*.workers.dev/sub`得到的新地址一般可以直接访问
 	2. 部署成`Pages`, `*.pages.dev`一般是可以直接访问的
-	3. 添加自定义域，以后用新域名访问也可以
+	3. 添加自定义域，用新域名访问也可以
 2. 如何知道某个`uuid`和`sni`失效了？
 	1. 使用`v2rayN`订阅 `https://*.pages.dev/v2ray`
 	2. `Ctrl+R` 测试真连接延迟
 	3. 按别名排序，观察某个`uuid`是否全为`-1`，别名`remark`前是`uuid`的前4位，可用于区分
+3. `workers`和`pages`有什么区别？
+	1. 自己没域名，选`pages`
+	2. `workers`修改调试方便
