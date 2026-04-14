@@ -22,7 +22,7 @@
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
 11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,/proxyip=proxyip.cmliussss.net?ed=2095,false
 ```
-5. 四列分别为：`uuid`、`sni`、`path`、`ech`，`path`直接从配置文件中复制，`ech`表示是否要开启`ECH`，注意部分节点不支持
+5. 四列分别为：`uuid`、`sni`、`path`、`ech`。`path`直接从配置文件中复制，`ech`表示是否要开启`ECH`，注意部分节点不支持
 6. 注意：`Pages`部署方式需要再上传一次，对`NODES`的修改才会生效
 
 ## 使用方法
@@ -31,7 +31,12 @@
 3. 访问 `https://*.pages.dev/sub`，可以查看`clash`新订阅地址，复制新地址到浏览器或各软件中即可
 4. 访问 `https://*.pages.dev/clash`，本质是返回了`clash`新订阅地址所获取的数据
 
-## 额外功能
+## 优选IP地区过滤
+1. 访问 `https://*.pages.dev/ip`，默认获取`HK-US`地区的`IP`，每区5只
+2. 访问 `https://*.pages.dev/ip?region=HK-JP-US&limit=10-6-6`，可以通过参数指定获取地区和数量，用`-`隔开。可用于`edgetunnel`
+3. 除了`/fetch`功能，其他功能都支持`region`和`limit`参数。限制每个地区最多20个`IP`，但建议地区太多时，一定减少数量
+
+## 指定UA
 1. 订阅时指定`UA`，临时解决部分软件不支持自定义`UA`的场景
 2. 访问 `https://*.pages.dev/fetch?ua=clash&url=https://xxx.xxxx.de5.net/sub?token=xxxx`
 3. `ua`为指定的`User-Agent`，`url`为机场订阅地址
@@ -54,7 +59,7 @@
 发现目前网络上提供的`v2ray`转`clash`的服务都会丢失`ech`信息，本工具会试着补全`ECH`信息，但需要配置文件的`ech`字段为`true`，
 底层会将`ech`信息保存在`path`字段，经过转换后，此字段还保留，可以被再次利用起来。
 
-`edgetunnel`和`cfnew`有对`DNS`覆写的功能，但改`yaml`实在麻烦，还是交给各软件的覆写吧
+`edgetunnel`和`cfnew`有对`DNS`覆写的功能，但改`yaml`实在麻烦，还是交给各客户端软件的覆写吧
 
 ### 检查浏览器ECH是否开启
 https://www.cloudflare-cn.com/ssl/encrypted-sni/#results
@@ -63,10 +68,17 @@ https://www.cloudflare-cn.com/ssl/encrypted-sni/#results
 https://zhuanlan.zhihu.com/p/3739662610
 
 ## 参考学习
-1. [edgetunnel](https://github.com/cmliu/edgetunnel)
-2. [cfnew](https://github.com/byJoey/cfnew)
+1. [cmliu/edgetunnel](https://github.com/cmliu/edgetunnel)
+2. [byJoey/cfnew](https://github.com/byJoey/cfnew)
+3. [hc990275/sub](https://github.com/hc990275/sub)
+4. [alienwaregf/Cloudflare-Country-Specific-IP-Filter](https://github.com/alienwaregf/Cloudflare-Country-Specific-IP-Filter)
+
 
 感谢各位大佬提供的代码和服务
+
+## 优选IP源
+- https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt
+- https://zip.cm.edu.kg/all.txt
 
 ## 免责声明
 1. 本项目仅供教育、科学研究及个人安全测试之目的。
