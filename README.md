@@ -6,28 +6,30 @@
 所以，我提供了一个工具，用来归集各组`UUID`和`SNI`，实现一个订阅，平均调用所有的节点
 
 ## 原理
-目前大家部署的`edgetunnel`和`cfnew`等项目，只要提供`uuid`、`sni`等信息，就可以生成一个原地址的订阅链接
+目前大家部署的`edgetunnel`和`cfnew`等项目，只要提供`uuid`、`sni`等信息，其他参数试试，就可以生成一个原地址的订阅链接
 只要将此链接中的`IP`地址修改成优选的IP或域名，就可以生成无数新地址，并且还能访问
 
 
 ## 部署方法
-1. 通过各种软件订阅`clash`或`v2ray`后，打开配置，找到`uuid`、`sni`、`path`和`ech`。多记录一组合就多`10w`每天
-2. 选择优选域名或优选IP的获取源，转换后的数据要求为`{ip,port,hash}`，如果缺`port`，则默认`443`，如果缺`hash`，则默认空
+1. 通过各种软件订阅`clash`或`v2ray`后，打开配置，找到`uuid`、`sni`、`path`、`ech`、`tls或security`。多记录一组合就多`10w`每天
+2. 选择优选域名或优选IP的获取源，转换后的数据要求为`{ip,port,hash}`，如果缺`hash`，则默认空，缺`port`保持空，后期会修正，
 3. 节点信息可以到源码中修改`DEFAULT_NODES`，也可以到`设置`->`变量和机密`，添加`文本`，变量名`NODES`。哪种更方便由用户自己选择
 ```
-# 参考格式。以逗号分割，额外可以使用`#`开头进行注释
-# 四列分别为：`uuid`、`sni`、`path`、`ech`。`path`直接从配置文件中复制，`ech`表示是否要开启`ECH`，注意部分节点不支持
+# 参考格式。以逗号分割，额外可以使用#开头进行注释
+# 四列分别为：uuid、sni、security、ech、path。path直接从配置文件中复制，ech表示是否要开启ECH，注意部分节点不支持
+# 可以先到v2rayN中使用优选域名cf.090227.xyz测试是否能通，再填写以下参数
+# 注意：security=none不安全，谨慎使用
 
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-00000000-0000-4000-8000-000000000000,xxx.eu.cc,/proxyip=proxyip.cmliussss.net,true
+00000000-0000-4000-8000-000000000000,xxx.eu.cc,tls,true,/proxyip=proxyip.cmliussss.net
 
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,/proxyip=proxyip.cmliussss.net?ed=2095,false
+11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,none,false,/proxyip=proxyip.cmliussss.net?ed=2095
 ```
 4. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/domain/v2ray`，查看效果
 5. 注意：`Pages`部署方式需要再上传一次，对`NODES`的修改才会生效
 
-## 优选域名使用方法(无法决定地区，节点超时概率低)
+## 优选域名使用方法(无法决定地区，节点超时概率低，推荐)
 1. 访问 `https://*.pages.dev/domain`，默认随机返回20条优选域名
 2. 访问 `https://*.pages.dev/domain/v2ray`，可以查看生成的`v2ray`信息
 3. 访问 `https://*.pages.dev/domain/base64`，可以查看生成的`v2ray`转`base64`格式信息
@@ -45,7 +47,7 @@
 
 ## 推荐订阅设置
 ```
-软件中订阅两条。平时用优选域名，需指定地区时用优选IP
+软件中订阅两条。平时用优选域名，需指定地区时再用优选IP
 # 优选域名
 https://*.pages.dev/domain/clash?limit=20
 # 优选IP

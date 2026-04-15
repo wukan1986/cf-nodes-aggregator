@@ -1,10 +1,15 @@
 ﻿// 默认节点信息，如果不想改环境变量，改此处也可以。环境变量优先级更高
 const DEFAULT_NODES = `
+# 参考格式。以逗号分割，额外可以使用#开头进行注释
+# 四列分别为：uuid、sni、security、ech、path。path直接从配置文件中复制，ech表示是否要开启ECH，注意部分节点不支持
+# 可以先到v2rayN中使用优选域名cf.090227.xyz测试是否能通，再填写以下参数
+# 注意：security=none不安全，谨慎使用
+
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-00000000-0000-4000-8000-000000000000,xxx.eu.cc,/proxyip=proxyip.cmliussss.net,true
+00000000-0000-4000-8000-000000000000,xxx.eu.cc,tls,true,/proxyip=proxyip.cmliussss.net
 
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,/proxyip=proxyip.cmliussss.net?ed=2095,false
+11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,none,false,/proxyip=proxyip.cmliussss.net?ed=2095
 `;
 
 // 优选IP地址
@@ -160,6 +165,26 @@ const REGION_MAP = {
 	'AQ': '南极洲', 'TF': '法属南部领地', 'BV': '布韦岛', 'HM': '赫德岛和麦克唐纳群岛'
 };
 
+function parse_nodes(inputText) {
+	console.log('parsing nodes');
+
+	return inputText
+		.split('\n')
+		.map(line => line.trim())
+		.filter(line => line && !line.startsWith('#'))
+		.flatMap(line => {
+			const parts = line.split(',').map(part => part.trim());
+
+			if (parts.length !== 5) {
+				console.warn(`忽略格式不正确的行: ${line}`);
+				return [];  // 返回空数组，相当于跳过
+			}
+
+			const [uuid, sni, security, ech, path] = parts;
+			return [{ uuid, sni, security, ech: stringToBoolean(ech), path: path || '/' }];
+		});
+}
+
 function withTimeoutCache(fn, options = {}) {
 	const {
 		maxSize = 100,
@@ -229,11 +254,11 @@ async function fetch_url(url) {
 const cached_fetch_300 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 300 });
 const cached_fetch_15 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 15 });
 
-function parse_ip_item(line, defaultPort = 443) {
+function parse_ip_item(line) {
 	const url = new URL("https://" + line);
 	const ip = url.hostname;
 	const hash = decodeURIComponent(url.hash ? url.hash.substring(1) : ''); // 去掉#
-	const port = url.port ? parseInt(url.port) : defaultPort;
+	const port = url.port; // 没写就为空
 	return { ip, port, hash };
 }
 
@@ -248,7 +273,7 @@ function parse_ip_text(content) {
 		.split('\n')
 		.map(line => line.trim())
 		.filter(line => line)
-		.map(line => parse_ip_item(line, 443));
+		.map(line => parse_ip_item(line));
 }
 
 function group_ip_list_by_hash(ipList) {
@@ -259,7 +284,9 @@ function group_ip_list_by_hash(ipList) {
 }
 
 function 生成地址列表(addresses) {
-	return addresses.map(({ ip, port, remark }) => `${ip}:${port}#${remark}`);
+	return addresses.map(({ ip, port, hash, remark }) =>
+		port ? `${ip}:${port}#${remark}` : `${ip}#${remark}`
+	);
 }
 
 async function handle_ip(url, context) {
@@ -287,9 +314,10 @@ async function handle_fetch(url) {
 	return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
 }
 
-function 生成协议链接(uuid, ip, port, sni, host, hash, path, ech) {
+function 生成协议链接(uuid, ip, port, sni, host, hash, path, ech, security) {
 	const _hash = `${uuid.slice(0, 4)}|${hash}`;
-	let url = `${atob('dmxlc3M=')}://${uuid}@${ip}:${port}?security=tls&type=ws&host=${host}&fp=chrome&sni=${sni}&encryption=none#${_hash}`;
+	const _port = port ? port : security === 'tls' ? 443 : 80;
+	let url = `${atob('dmxlc3M=')}://${uuid}@${ip}:${_port}?security=${security}&type=ws&host=${host}&fp=chrome&sni=${sni}&encryption=none#${_hash}`;
 	const url1 = new URL(url);
 	if (ech) url1.searchParams.set('ech', ECH);
 	if (path) {
@@ -303,8 +331,8 @@ function 生成协议链接(uuid, ip, port, sni, host, hash, path, ech) {
 
 function 生成链接列表(addresses, nodes) {
 	return addresses.map(({ ip, port, hash, remark }, i) => {
-		const { uuid, sni, path, ech } = nodes[i % nodes.length];
-		return 生成协议链接(uuid, ip, port, sni, sni, remark, path, ech);
+		const { uuid, sni, path, ech, security } = nodes[i % nodes.length];
+		return 生成协议链接(uuid, ip, port, sni, sni, remark, path, ech, security);
 	});
 }
 
@@ -350,30 +378,7 @@ async function handle_domain_v2ray(url, env, context, base64) {
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-function stringToBoolean(str) {
-	if (!str) return false;
-	const s = str.toLowerCase().trim();
-	return s === "true" || s === "1" || s === "yes" || s === "on";
-}
-function parse_nodes(inputText) {
-	console.log('parsing nodes');
 
-	return inputText
-		.split('\n')
-		.map(line => line.trim())
-		.filter(line => line && !line.startsWith('#'))
-		.flatMap(line => {
-			const parts = line.split(',').map(part => part.trim());
-
-			if (parts.length !== 4) {
-				console.warn(`忽略格式不正确的行: ${line}`);
-				return [];  // 返回空数组，相当于跳过
-			}
-
-			const [uuid, sni, path, ech] = parts;
-			return [{ uuid, sni, path: path || '/', ech: stringToBoolean(ech) }];
-		});
-}
 
 function 生成订阅链接(url) {
 	const new_url = new URL(`${CONVERT_URL}/sub?target=clash&emoji=false&scv=false`);
@@ -423,6 +428,12 @@ async function handle_clash(url) {
 	const content = await cached_fetch_15(url_sub.href);
 	const updatedYaml = add_ech_to_yaml(content);
 	return new Response(updatedYaml, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+}
+
+function stringToBoolean(str) {
+	if (!str) return false;
+	const s = str.toLowerCase().trim();
+	return s === "true" || s === "1" || s === "yes" || s === "on";
 }
 function zip(...arrays) {
 	const length = Math.min(...arrays.map(arr => arr.length));
