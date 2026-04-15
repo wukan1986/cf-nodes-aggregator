@@ -91,9 +91,12 @@ https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
 | CF_NODES | | CF节点信息。**可以**根据优选域名增加节点 |
 | NOT_CF_NODES | | 非CF节点信息。**不可以**根据优选域名增加节点 |
 | CONVERT_URL | https://subapi.cmliussss.net | v2ray转clash服务 |
-| CONFIG_URL | https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini | Clash模板文件 |
-| BEST_IP_URL | https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt | 优选IP |
+| CONFIG_URL | [^1] | Clash模板文件 |
+| BEST_IP_URL | [^2] | 优选IP |
 | BEST_DOMAINS | | 优选域名。用户可将自己手工选出的优选IP也添加到此变量中 |
+
+[^1]: https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini
+[^2]: https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt
 
 ## 其他问题
 1. `workers.dev`地址无法访问怎么办？
