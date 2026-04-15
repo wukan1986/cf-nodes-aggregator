@@ -1,36 +1,32 @@
-﻿// 默认节点信息，如果不想改环境变量，改此处也可以。环境变量优先级更高
-const DEFAULT_NODES = `
-# 参考格式。以逗号分割，额外可以使用#开头进行注释
-# 四列分别为：uuid、sni、security、ech、path。path直接从配置文件中复制，ech表示是否要开启ECH，注意部分节点不支持
-# 可以先到v2rayN中使用优选域名cf.090227.xyz测试是否能通，再填写以下参数
-# 注意：security=none不安全，谨慎使用
+﻿// 注意：为防代码被拦截，链接vless被替换成了${atob('dmxlc3M=')}
 
+// CF节点信息，只替换hostname和port就可以实现优选
+let CF_NODES = `
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-00000000-0000-4000-8000-000000000000,xxx.eu.cc,tls,true,/proxyip=proxyip.cmliussss.net
-
+${atob('dmxlc3M=')}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fech%3D1#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,none,false,/proxyip=proxyip.cmliussss.net?ed=2095
+${atob('dmxlc3M=')}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fed%3D2095#1111|%E7%94%B5%E4%BF%A1090227
+
 `;
 
-// 优选IP地址
-const IP_URL = 'https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt';
+// 自行搭建的非CF节点，无法使用优选IP域名，但可以统一放在这一起订阅管理
+let NOT_CF_NODES = `
+# 用#号忽略当前行
+# ${atob('dmxlc3M=')}://00000000-0000-4000-8000-000000000000@127.0.01:80?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none#备注
 
-// 订阅转换服务，由于被屏蔽，只能转换
-const CONVERT_URL = atob("aHR0cHM6Ly9zdWJhcGkuY21saXVzc3NzLm5ldA==");
+`;
+
+// 订阅转换服务，由于被屏蔽，只能转换，可以通过`domain/sub`看到还原的链接
+let CONVERT_URL = atob("aHR0cHM6Ly9zdWJhcGkuY21saXVzc3NzLm5ldA==");
 // 配置文件模板
-const CONFIG_URL = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini"
+let CONFIG_URL = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini"
 
 
-// ECH配置
-const ECH_SNI = "cloudflare-ech.com";
-const ECH_FALLBACK = "https://223.5.5.5/dns-query";
-// 只要NODES配置中，ech为真，就用ECH替代
-const ECH = `${ECH_SNI}+${ECH_FALLBACK}`;
+// 优选IP地址
+let BEST_IP_URL = 'https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt';
 
-// CDN代理地址，一般不用动
-// const PATH = "/proxyip=proxyip.cmliussss.net";
-
-const DOMAINS = `cloudflare-dns.com#Cloudflare DNS
+// TODO 可以在此自定义域名，其实也可以自定义IP
+let BEST_DOMAINS = `cloudflare-dns.com#Cloudflare DNS
 www.temu.com#Temu
 docs.cloudflare.com#Cloudflare Docs
 itarmy.com.ua#ItArmy乌克兰资讯科技军
@@ -93,6 +89,9 @@ ctcc.cloudflare.seeck.cn#电信seeck
 cmcc.cloudflare.seeck.cn#移动seeck
 cucc.cloudflare.seeck.cn#联通seeck
 `;
+
+// ECH配置
+const ECH_SNI = "cloudflare-ech.com";
 
 /**
  * 地区名称映射 (全球主要 Cloudflare 节点所在国家/地区)
@@ -164,26 +163,6 @@ const REGION_MAP = {
 	// 南极洲与其他偏远岛屿 (Antarctica & Other Islands)
 	'AQ': '南极洲', 'TF': '法属南部领地', 'BV': '布韦岛', 'HM': '赫德岛和麦克唐纳群岛'
 };
-
-function parse_nodes(inputText) {
-	console.log('parsing nodes');
-
-	return inputText
-		.split('\n')
-		.map(line => line.trim())
-		.filter(line => line && !line.startsWith('#'))
-		.flatMap(line => {
-			const parts = line.split(',').map(part => part.trim());
-
-			if (parts.length !== 5) {
-				console.warn(`忽略格式不正确的行: ${line}`);
-				return [];  // 返回空数组，相当于跳过
-			}
-
-			const [uuid, sni, security, ech, path] = parts;
-			return [{ uuid, sni, security, ech: stringToBoolean(ech), path: path || '/' }];
-		});
-}
 
 function withTimeoutCache(fn, options = {}) {
 	const {
@@ -314,26 +293,40 @@ async function handle_fetch(url) {
 	return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
 }
 
-function 生成协议链接(uuid, ip, port, sni, host, hash, path, ech, security) {
-	const _hash = `${uuid.slice(0, 4)}|${hash}`;
-	const _port = port ? port : security === 'tls' ? 443 : 80;
-	let url = `${atob('dmxlc3M=')}://${uuid}@${ip}:${_port}?security=${security}&type=ws&host=${host}&fp=chrome&sni=${sni}&encryption=none#${_hash}`;
+function 更新协议链接(url, ip, port, hash) {
 	const url1 = new URL(url);
-	if (ech) url1.searchParams.set('ech', ECH);
-	if (path) {
-		const url2 = new URL(path, "http://127.0.0.1");
-		// 强行对path加一个ech参数
-		if (ech) url2.searchParams.set('ech', '1');
-		url1.searchParams.set('path', url2.pathname + url2.search + url2.hash);
-	}
+	const uuid = url1.username;
+	const security = url1.searchParams.get('security');
+	url1.hostname = ip;
+	url1.port = port ? port : security === 'tls' ? 443 : 80;
+	url1.hash = `${uuid.slice(0, 4)}|${hash}`;
 	return url1.href;
 }
 
-function 生成链接列表(addresses, nodes) {
+function 调整协议链接(url) {
+	const url1 = new URL(url);
+	const url2 = new URL(url1.searchParams.get('path'), "http://127.0.0.1");
+	const ech = url1.searchParams.get('ech');
+	if (ech) {
+		// path中加ech=1
+		url2.searchParams.set('ech', '1');
+	}
+	else {
+		url2.searchParams.delete('ech');
+	}
+	url1.searchParams.set('path', url2.pathname + url2.search + url2.hash);
+	return url1.href;
+}
+
+function 更新链接列表(addresses, nodes) {
 	return addresses.map(({ ip, port, hash, remark }, i) => {
-		const { uuid, sni, path, ech, security } = nodes[i % nodes.length];
-		return 生成协议链接(uuid, ip, port, sni, sni, remark, path, ech, security);
+		const url = nodes[i % nodes.length];
+		return 更新协议链接(url, ip, port, remark);
 	});
+}
+
+function 调整链接列表(links) {
+	return links.map(i => 调整协议链接(i));
 }
 
 function ip_filter(region_ip, region_limit) {
@@ -359,26 +352,28 @@ function domain_filter(domain_list, limit) {
 	return limitedList;
 }
 
-async function handle_ip_v2ray(url, env, context, base64) {
+async function handle_ip_v2ray(url, context, base64) {
+	const cf_nodes = parse_nodes(CF_NODES);
+	const not_cf_nodes = parse_nodes(NOT_CF_NODES);
 	const region_limit = get_region_limit(url);
-	const nodes = get_nodes(env);
 	const region_ip = group_ip_list_by_hash(parse_ip_text(context));
 	const new_region_ip = ip_filter(region_ip, region_limit);
-	let 列表 = 生成链接列表([...new_region_ip.values()].flat(), nodes).join("\n")
+	let 列表 = 更新链接列表([...new_region_ip.values()].flat(), cf_nodes);
+	列表 = 调整链接列表(not_cf_nodes.concat(列表)).join("\n")
 	if (base64) 列表 = btoa(列表);
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-async function handle_domain_v2ray(url, env, context, base64) {
+async function handle_domain_v2ray(url, context, base64) {
+	const cf_nodes = parse_nodes(CF_NODES);
+	const not_cf_nodes = parse_nodes(NOT_CF_NODES);
 	const limit = get_limit(url);
-	const nodes = get_nodes(env);
 	const domain_list = parse_ip_text(context);
-	let 列表 = 生成链接列表(domain_filter(domain_list, limit), nodes).join("\n")
+	let 列表 = 更新链接列表(domain_filter(domain_list, limit), cf_nodes);
+	列表 = 调整链接列表(not_cf_nodes.concat(列表)).join("\n")
 	if (base64) 列表 = btoa(列表);
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
-
-
 
 function 生成订阅链接(url) {
 	const new_url = new URL(`${CONVERT_URL}/sub?target=clash&emoji=false&scv=false`);
@@ -417,7 +412,7 @@ async function handle_sub(url) {
 function add_ech_to_yaml(yamlString) {
 	return yamlString.replace(
 		/(ws-opts.*?ech=1.*?)(}})(?![^}]*ech-opts)/g,
-		`$1}, ech-opts: {enable: true, query-server-name: ${ECH_SNI}}}`
+		`$1}}, ech-opts: {enable: true, query-server-name: ${ECH_SNI}}`
 	);
 }
 async function handle_clash(url) {
@@ -451,40 +446,50 @@ function get_limit(url, max_limit = 60) {
 	const limit = url.searchParams.get('limit') || "20";
 	return Math.min(parseInt(limit, 10), max_limit);
 }
+function parse_nodes(inputText) {
+	console.log('parsing nodes');
 
-// 节点信息
-let NODES = [];
-function get_nodes(env) {
-	try {
-		if (!NODES?.length)
-			NODES = parse_nodes(env.NODES || DEFAULT_NODES);
-	} catch (e) {
-		console.log(e);
-	}
-	return NODES;
+	return inputText
+		.split('\n')
+		.map(line => line.trim())
+		.filter(line => line && !line.startsWith('#'));
 }
+
 
 export default {
 	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
+
 		switch (url.pathname) {
 			case '/fetch':
 				return await handle_fetch(url);
 			case '/ip':
-				return await handle_ip(url, await cached_fetch_300(IP_URL));
+				BEST_IP_URL = env.BEST_DOMAINS || BEST_IP_URL;
+				return await handle_ip(url, await cached_fetch_300(BEST_IP_URL));
 			case '/domain':
-				return await handle_domain(url, DOMAINS);
+				BEST_DOMAINS = env.BEST_DOMAINS || BEST_DOMAINS;
+				return await handle_domain(url, BEST_DOMAINS);
 			case '/ip/v2ray':
 			case '/ip/base64':
-				return await handle_ip_v2ray(url, env, await cached_fetch_300(IP_URL), url.pathname.endsWith('/base64'));
+				BEST_IP_URL = env.BEST_DOMAINS || BEST_IP_URL;
+				CF_NODES = env.CF_NODES || CF_NODES;
+				NOT_CF_NODES = env.NOT_CF_NODES || NOT_CF_NODES;
+				return await handle_ip_v2ray(url, await cached_fetch_300(BEST_IP_URL), url.pathname.endsWith('/base64'));
 			case '/domain/v2ray':
 			case '/domain/base64':
-				return await handle_domain_v2ray(url, env, DOMAINS, url.pathname.endsWith('/base64'));
+				BEST_DOMAINS = env.BEST_DOMAINS || BEST_DOMAINS;
+				CF_NODES = env.CF_NODES || CF_NODES;
+				NOT_CF_NODES = env.NOT_CF_NODES || NOT_CF_NODES;
+				return await handle_domain_v2ray(url, BEST_DOMAINS, url.pathname.endsWith('/base64'));
 			case '/ip/sub':
 			case '/domain/sub':
+				CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
+				CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
 				return await handle_sub(url);
 			case '/ip/clash':
 			case '/domain/clash':
+				CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
+				CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
 				return await handle_clash(url);
 			default:
 				return new Response('Hello World!');

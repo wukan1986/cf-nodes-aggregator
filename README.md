@@ -6,30 +6,54 @@
 所以，我提供了一个工具，用来归集各组`UUID`和`SNI`，实现一个订阅，平均调用所有的节点
 
 ## 原理
-目前大家部署的`edgetunnel`和`cfnew`等项目，只要提供`uuid`、`sni`等信息，其他参数试试，就可以生成一个原地址的订阅链接
-只要将此链接中的`IP`地址修改成优选的IP或域名，就可以生成无数新地址，并且还能访问
+目前大家部署的`edgetunnel`和`cfnew`等`CF`项目，只要提供可用的`vless`链接，将此链接中的`hostname`、`port`修改成优选的IP或域名，就可以生成无数新链接
 
+## 如何获取vless链接
+1. `edgetunnel`的后台面板直接提供了原始`vless`链接
+2. `edgetunnel`的订阅连接直接用浏览器打开获取`vless`链接
+3. `v2rayN`中选中一个`vless`节点，右键导出，导出分享链接到剪贴板
+4. 根据`clash`配置，在`v2rayN`中同样设置，测试通过后，再导出`vless`链接。以下是对照表
+
+| vless | clash | v2rayN | 示例 |
+|---|---|---|---|
+| hostname | server | 地址(address) | www.temu.com 或 127.0.0.1 |
+| port | port | 端口(port) | 443 |
+| username | uuid | 用户ID(id) | 0c16c03b-737f-4988-82b3-526a3efb43ba |
+| path= | path | 路径(path) | /proxyip=proxyip.cmliussss.net?ed=2095 |
+| security=tls | tls:true | 传输层安全(TLS):tls | |
+| security=none | tls:false | 传输层安全(TLS): | |
+| sni=| servername | SNI | xxx.xxxx.de5.net | 
+| host=| Host | 伪装域名(host) | 转成clash时host丢弃用的sni的值 |
+| ech= | ech-opts: {enable: true, query-server-name: cloudflare-ech.com} | EchCofigList | cloudflare-ech.com+https://223.5.5.5/dns-query |
 
 ## 部署方法
-1. 通过各种软件订阅`clash`或`v2ray`后，打开配置，找到`uuid`、`sni`、`path`、`ech`、`tls或security`。多记录一组合就多`10w`每天
-2. 选择优选域名或优选IP的获取源，转换后的数据要求为`{ip,port,hash}`，如果缺`hash`，则默认空，缺`port`保持空，后期会修正，
-3. 节点信息可以到源码中修改`DEFAULT_NODES`，也可以到`设置`->`变量和机密`，添加`文本`，变量名`NODES`。哪种更方便由用户自己选择
-```
-# 参考格式。以逗号分割，额外可以使用#开头进行注释
-# 四列分别为：uuid、sni、security、ech、path。path直接从配置文件中复制，ech表示是否要开启ECH，注意部分节点不支持
-# 可以先到v2rayN中使用优选域名cf.090227.xyz测试是否能通，再填写以下参数
-# 注意：security=none不安全，谨慎使用
+1. 节点信息可以到源码中修改`CF_NODES`，注意：`vless`字符为防屏蔽，替换成了Base64`${atob('dmxlc3M=')}`
+```javascript
+
+let CF_NODES = `
 
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-00000000-0000-4000-8000-000000000000,xxx.eu.cc,tls,true,/proxyip=proxyip.cmliussss.net
+${atob('dmxlc3M=')}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fech%3D1#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
+# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
+${atob('dmxlc3M=')}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fed%3D2095#1111|%E7%94%B5%E4%BF%A1090227
+
+`;
+```
+
+2. 也可以到`设置`->`变量和机密`，添加`文本`，变量名`CF_NODES`。注意：这里`vless`需要保持原始字符串
+```text
+
+# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
+vless://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fech%3D1#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
 
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,none,false,/proxyip=proxyip.cmliussss.net?ed=2095
+vless://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fed%3D2095#1111|%E7%94%B5%E4%BF%A1090227
+
 ```
 4. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/domain/v2ray`，查看效果
-5. 注意：`Pages`部署方式需要再上传一次，对`NODES`的修改才会生效
+5. 注意：`Pages`部署方式需要再上传一次，对`CF_NODES`环境变量的修改才会生效
 
-## 优选域名使用方法(无法决定地区，节点超时概率低，推荐)
+## 优选域名使用方法(无法决定地区，节点超时概率低，推荐使用)
 1. 访问 `https://*.pages.dev/domain`，默认随机返回20条优选域名
 2. 访问 `https://*.pages.dev/domain/v2ray`，可以查看生成的`v2ray`信息
 3. 访问 `https://*.pages.dev/domain/base64`，可以查看生成的`v2ray`转`base64`格式信息
@@ -46,13 +70,13 @@
 6. `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
 
 ## 推荐订阅设置
-```
-软件中订阅两条。平时用优选域名，需指定地区时再用优选IP
+```html
+软件中订阅两条。因为域名比IP稳定，所以平时用优选域名，需指定地区时再用优选IP
+
 # 优选域名
 https://*.pages.dev/domain/clash?limit=20
 # 优选IP
 https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
-
 ```
 
 ## 订阅指定UA
@@ -60,6 +84,16 @@ https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
 2. 访问 `https://*.pages.dev/fetch?ua=clash&url=https://xxx.xxxx.de5.net/sub?token=xxxx`
 3. `ua`为指定的`User-Agent`，`url`为机场订阅地址
 4. 此功能也能解决部分订阅地址无法直接访问的的场景
+
+## 全部环境变量
+| 变量名 | 默认值 | 说明 |
+|---|---|---|
+| CF_NODES | | CF节点信息。**可以**根据优选域名增加节点 |
+| NOT_CF_NODES | | 非CF节点信息。**不可以**根据优选域名增加节点 |
+| CONVERT_URL | https://subapi.cmliussss.net | v2ray转clash服务 |
+| CONFIG_URL | https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini | Clash模板文件 |
+| BEST_IP_URL | https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt | 优选IP |
+| BEST_DOMAINS | | 优选域名。用户可将自己手工选出的优选IP也添加到此变量中 |
 
 ## 其他问题
 1. `workers.dev`地址无法访问怎么办？
