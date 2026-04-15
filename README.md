@@ -12,31 +12,48 @@
 
 ## 部署方法
 1. 通过各种软件订阅`clash`或`v2ray`后，打开配置，找到`uuid`、`sni`、`path`和`ech`。多记录一组合就多`10w`每天
-2. 选择优选域名或优选IP的获取源，转换后的数据要求为`{ip,port,remark}`，如果缺`port`，则默认`443`，如果缺`remark`，则默认空
-3. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/v2ray`，查看效果
-4. 到`设置`->`变量和机密`，添加`文本`，变量名`NODES`，以`csv`格式填写，额外可以使用`#`开头进行注释。例如：
-```csv
+2. 选择优选域名或优选IP的获取源，转换后的数据要求为`{ip,port,hash}`，如果缺`port`，则默认`443`，如果缺`hash`，则默认空
+3. 节点信息可以到源码中修改`DEFAULT_NODES`，也可以到`设置`->`变量和机密`，添加`文本`，变量名`NODES`。哪种更方便由用户自己选择
+```
+# 参考格式。以逗号分割，额外可以使用`#`开头进行注释
+# 四列分别为：`uuid`、`sni`、`path`、`ech`。`path`直接从配置文件中复制，`ech`表示是否要开启`ECH`，注意部分节点不支持
+
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
 00000000-0000-4000-8000-000000000000,xxx.eu.cc,/proxyip=proxyip.cmliussss.net,true
 
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
 11111111-1111-4111-8111-111111111111,xxx.xxxx.de5.net,/proxyip=proxyip.cmliussss.net?ed=2095,false
 ```
-5. 四列分别为：`uuid`、`sni`、`path`、`ech`。`path`直接从配置文件中复制，`ech`表示是否要开启`ECH`，注意部分节点不支持
-6. 注意：`Pages`部署方式需要再上传一次，对`NODES`的修改才会生效
+4. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/domain/v2ray`，查看效果
+5. 注意：`Pages`部署方式需要再上传一次，对`NODES`的修改才会生效
 
-## 使用方法
-1. 访问 `https://*.pages.dev/v2ray`，可以查看生成的`v2ray`信息
-2. 访问 `https://*.pages.dev/base64`，可以查看生成的`v2ray`转`base64`格式信息
-3. 访问 `https://*.pages.dev/sub`，可以查看`clash`新订阅地址，复制新地址到浏览器或各软件中即可
-4. 访问 `https://*.pages.dev/clash`，本质是返回了`clash`新订阅地址所获取的数据
+## 优选域名使用方法(无法决定地区，节点超时概率低)
+1. 访问 `https://*.pages.dev/domain`，默认随机返回20条优选域名
+2. 访问 `https://*.pages.dev/domain/v2ray`，可以查看生成的`v2ray`信息
+3. 访问 `https://*.pages.dev/domain/base64`，可以查看生成的`v2ray`转`base64`格式信息
+4. 访问 `https://*.pages.dev/domain/sub`，可以查看`clash`新订阅地址，复制新地址到浏览器或各软件中即可
+5. 访问 `https://*.pages.dev/domain/clash`，本质是返回了`clash`新订阅地址所获取的数据
+6. 所有 `/domain/*`，都支持`limit`参数，例如：`https://*.pages.dev/domain?limit=10`
 
-## 优选IP地区过滤
-1. 访问 `https://*.pages.dev/ip`，默认获取`HK-US`地区的`IP`，每区5只
-2. 访问 `https://*.pages.dev/ip?region=HK-JP-US&limit=10-6-6`，可以通过参数指定获取地区和数量，用`-`隔开。可用于`edgetunnel`
-3. 除了`/fetch`功能，其他功能都支持`region`和`limit`参数。限制每个地区最多20个`IP`，但建议地区太多时，一定减少数量
+## 优选IP使用方法(可以选定地区，但节点超时概率高)
+1. 访问 `https://*.pages.dev/ip`，默认随机返回`HK-US`地区的`IP`，每区5只
+2. 访问 `https://*.pages.dev/ip/v2ray`，可以查看生成的`v2ray`信息
+3. 访问 `https://*.pages.dev/ip/base64`，可以查看生成的`v2ray`转`base64`格式信息
+4. 访问 `https://*.pages.dev/ip/sub`，可以查看`clash`新订阅地址，复制新地址到浏览器或各软件中即可
+5. 访问 `https://*.pages.dev/ip/clash`，本质是返回了`clash`新订阅地址所获取的数据
+6. `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
 
-## 指定UA
+## 推荐订阅设置
+```
+软件中订阅两条。平时用优选域名，需指定地区时用优选IP
+# 优选域名
+https://*.pages.dev/domain/clash?limit=20
+# 优选IP
+https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
+
+```
+
+## 订阅指定UA
 1. 订阅时指定`UA`，临时解决部分软件不支持自定义`UA`的场景
 2. 访问 `https://*.pages.dev/fetch?ua=clash&url=https://xxx.xxxx.de5.net/sub?token=xxxx`
 3. `ua`为指定的`User-Agent`，`url`为机场订阅地址
@@ -48,9 +65,8 @@
 	2. 部署成`Pages`, `*.pages.dev`一般是可以直接访问的
 	3. 添加自定义域，用新域名访问也可以
 2. 如何知道某个`uuid`和`sni`失效了？
-	1. 使用`v2rayN`订阅 `https://*.pages.dev/v2ray`
-	2. `Ctrl+R` 测试真连接延迟
-	3. 按别名排序，观察某个`uuid`是否全为`-1`，别名`remark`前是`uuid`的前4位，可用于区分
+	1. 按名称排序，观察某个`uuid`是否全为`-1`或`Timeout`，别名`remark`前是`uuid`的前4位，可用于区分
+	2. 某软件代理6个一行，可以`NODES`数量不足时复制多份补全6条，这样一列就是同一`uuid`的，整列都超时就可以剔除了
 3. `workers`和`pages`有什么区别？
 	1. 自己没域名，选`pages`，但每次修改变量要重新上传代码
 	2. `workers`修改调试方便，国内可搭配自定义域访问

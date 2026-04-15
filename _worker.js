@@ -1,14 +1,4 @@
-﻿/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
-
-// 默认节点信息，如果不想改环境变量，改此处也可以
+﻿// 默认节点信息，如果不想改环境变量，改此处也可以。环境变量优先级更高
 const DEFAULT_NODES = `
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
 00000000-0000-4000-8000-000000000000,xxx.eu.cc,/proxyip=proxyip.cmliussss.net,true
@@ -20,8 +10,9 @@ const DEFAULT_NODES = `
 // 优选IP地址
 const IP_URL = 'https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt';
 
-// 配置文件转换地址，由于被屏蔽，只能转换
+// 订阅转换服务，由于被屏蔽，只能转换
 const CONVERT_URL = atob("aHR0cHM6Ly9zdWJhcGkuY21saXVzc3NzLm5ldA==");
+// 配置文件模板
 const CONFIG_URL = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini"
 
 
@@ -32,7 +23,71 @@ const ECH_FALLBACK = "https://223.5.5.5/dns-query";
 const ECH = `${ECH_SNI}+${ECH_FALLBACK}`;
 
 // CDN代理地址，一般不用动
-const PATH = "/proxyip=proxyip.cmliussss.net";
+// const PATH = "/proxyip=proxyip.cmliussss.net";
+
+const DOMAINS = `cloudflare-dns.com#Cloudflare DNS
+www.temu.com#Temu
+docs.cloudflare.com#Cloudflare Docs
+itarmy.com.ua#ItArmy乌克兰资讯科技军
+www.shopify.com#Shopify
+www.fbi.gov#FBI
+www.wto.org#WTO
+www.epicgames.com#Epic Games
+support.cloudflare.com#Cloudflare Support
+blog.cloudflare.com#Cloudflare Blog
+ns.cloudflare.com#Cloudflare NS
+developers.cloudflare.com#Cloudflare Developers
+openai.com#OpenAI
+www.whatismyip.net#WhatismyIP
+www.npmjs.com#npmjs
+cdnjs.com#cdnjs
+www.udemy.com#Udemy
+www.csgo.net#csgo
+www.visa.cn#Visa中国
+mfa.gov.ua#乌克兰外交部
+store.ubi.com#Ubisoft
+staticdelivery.nexusmods.com#NexusMods
+icook.tw#台湾爱料理
+icook.hk#香港爱料理
+ip.sb#IP.sb
+time.is#Time.is
+www.speedtest.net#Speedtest
+www.whoer.net#WHOER
+japan.com#日本Japan
+russia.com#俄罗斯Russia
+singapore.com#新加坡Singapore
+malaysia.com#马来西亚Malaysia
+ln.edu.hk#香港岭南大学
+biomaterials.ust.hk#香港科技大学
+yingwa.edu.hk#香港英华
+hongkongairport.com#香港机场
+indonesia.com#印尼Indonesia
+www.hugedomains.com#hugedomains
+www.digitalocean.com#digitalocean
+cdn.onesignal.com#onesignal
+www.glassdoor.com#glassdoor
+palera.in#palera
+itunes.apple.com#iTunes
+www.drmartens.co.kr#韩国马丁靴
+skk.moe#日本前端资源
+cloudflare-ech.com#CF基础设施(ECH)
+
+saas.sin.fan#SIN域名MIYU维护
+cf.tencentapp.cn#腾讯APP个人
+cloudflare-dl.byoip.top#NB优选服务
+cf.877774.xyz#秋名山877774
+bestcf.030101.xyz#Mingyu维护030101
+cf.cloudflare.182682.xyz#WeTest.Vip
+
+cf.090227.xyz#三网090227
+cm.090227.xyz#移动090227
+cu.090227.xyz#联通090227
+ct.090227.xyz#电信090227
+cloudflare.seeck.cn#三网seeck
+ctcc.cloudflare.seeck.cn#电信seeck
+cmcc.cloudflare.seeck.cn#移动seeck
+cucc.cloudflare.seeck.cn#联通seeck
+`;
 
 /**
  * 地区名称映射 (全球主要 Cloudflare 节点所在国家/地区)
@@ -177,7 +232,7 @@ const cached_fetch_15 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 1
 function parse_ip_item(line, defaultPort = 443) {
 	const url = new URL("https://" + line);
 	const ip = url.hostname;
-	const hash = url.hash ? url.hash.substring(1) : ''; // 去掉#
+	const hash = decodeURIComponent(url.hash ? url.hash.substring(1) : ''); // 去掉#
 	const port = url.port ? parseInt(url.port) : defaultPort;
 	return { ip, port, hash };
 }
@@ -193,7 +248,7 @@ function parse_ip_text(content) {
 		.split('\n')
 		.map(line => line.trim())
 		.filter(line => line)
-		.map(parse_ip_item);
+		.map(line => parse_ip_item(line, 443));
 }
 
 function group_ip_list_by_hash(ipList) {
@@ -207,11 +262,18 @@ function 生成地址列表(addresses) {
 	return addresses.map(({ ip, port, remark }) => `${ip}:${port}#${remark}`);
 }
 
-async function handle_ip(url, targetUrl) {
+async function handle_ip(url, context) {
 	const region_limit = get_region_limit(url);
-	const region_ip = group_ip_list_by_hash(parse_ip_text(await cached_fetch_300(targetUrl)));
-	const new_region_ip = ip_map_filter(region_ip, region_limit);
+	const region_ip = group_ip_list_by_hash(parse_ip_text(context));
+	const new_region_ip = ip_filter(region_ip, region_limit);
 	let 列表 = 生成地址列表([...new_region_ip.values()].flat()).join("\n")
+	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+}
+
+async function handle_domain(url, context) {
+	const limit = get_limit(url);
+	const domain_list = parse_ip_text(context);
+	let 列表 = 生成地址列表(domain_filter(domain_list, limit)).join("\n")
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
@@ -246,7 +308,7 @@ function 生成链接列表(addresses, nodes) {
 	});
 }
 
-function ip_map_filter(region_ip, region_limit) {
+function ip_filter(region_ip, region_limit) {
 	const regionMap = new Map();
 	for (const [region, limit] of region_limit) {
 		const region_ip_list = region_ip.get(region);
@@ -254,29 +316,38 @@ function ip_map_filter(region_ip, region_limit) {
 			regionMap.set(region, []);
 		} else {
 			const name = REGION_MAP[region] || '未知';
-			const limitedList = Array.from(region_ip_list).slice(0, parseInt(limit)).map((item, index) => ({ ...item, remark: `${item.hash} ${name} ${index + 1}` }));
+			// 随机一下，以免每次选出结果一
+			const shuffled = Array.from(region_ip_list).sort(() => Math.random() - 0.5);
+			const limitedList = shuffled.slice(0, limit).map((item, index) => ({ ...item, remark: `${item.hash} ${name} ${index + 1}` }));
 			regionMap.set(region, limitedList);
 		}
 	}
 	return regionMap;
 }
 
-async function handle_v2ray(url, env, targetUrl) {
+function domain_filter(domain_list, limit) {
+	const shuffled = Array.from(domain_list).sort(() => Math.random() - 0.5);
+	const limitedList = shuffled.slice(0, limit).map((item, index) => ({ ...item, remark: `${item.hash}` }));
+	return limitedList;
+}
+
+async function handle_ip_v2ray(url, env, context, base64) {
 	const region_limit = get_region_limit(url);
 	const nodes = get_nodes(env);
-	const region_ip = group_ip_list_by_hash(parse_ip_text(await cached_fetch_300(targetUrl)));
-	const new_region_ip = ip_map_filter(region_ip, region_limit);
+	const region_ip = group_ip_list_by_hash(parse_ip_text(context));
+	const new_region_ip = ip_filter(region_ip, region_limit);
 	let 列表 = 生成链接列表([...new_region_ip.values()].flat(), nodes).join("\n")
+	if (base64) 列表 = btoa(列表);
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-async function handle_base64(url, env, targetUrl) {
-	const region_limit = get_region_limit(url);
+async function handle_domain_v2ray(url, env, context, base64) {
+	const limit = get_limit(url);
 	const nodes = get_nodes(env);
-	const region_ip = group_ip_list_by_hash(parse_ip_text(await cached_fetch_300(targetUrl)));
-	const new_region_ip = ip_map_filter(region_ip, region_limit);
-	let 列表 = 生成链接列表([...new_region_ip.values()].flat(), nodes).join("\n")
-	return new Response(btoa(列表), { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	const domain_list = parse_ip_text(context);
+	let 列表 = 生成链接列表(domain_filter(domain_list, limit), nodes).join("\n")
+	if (base64) 列表 = btoa(列表);
+	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
 function stringToBoolean(str) {
@@ -305,16 +376,17 @@ function parse_nodes(inputText) {
 }
 
 function 生成订阅链接(url) {
-	url.pathname = '/base64';
 	const new_url = new URL(`${CONVERT_URL}/sub?target=clash&emoji=false&scv=false`);
 	new_url.searchParams.set('url', url);
 	new_url.searchParams.set('config', CONFIG_URL);
 	return new_url;
 }
 async function handle_sub(url) {
-	const url_sub = new 生成订阅链接(url);
+	let url_sub = new URL(url);
+	url_sub.pathname = url_sub.pathname.replace('/sub', '/base64');
+	url_sub = 生成订阅链接(url_sub);
 	const url_clash = new URL(url);
-	url_clash.pathname = '/clash';
+	url_clash.pathname = url_clash.pathname.replace('/sub', '/clash');
 
 	const htmlContent = `
 <!DOCTYPE html>
@@ -344,9 +416,11 @@ function add_ech_to_yaml(yamlString) {
 	);
 }
 async function handle_clash(url) {
-	const sub_url = 生成订阅链接(url)
+	let url_sub = new URL(url);
+	url_sub.pathname = url_sub.pathname.replace('/clash', '/base64');
+	url_sub = 生成订阅链接(url_sub);
 	// 订阅转换ech丢失，需要后期添加
-	const content = await cached_fetch_15(sub_url);
+	const content = await cached_fetch_15(url_sub.href);
 	const updatedYaml = add_ech_to_yaml(content);
 	return new Response(updatedYaml, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
@@ -354,12 +428,17 @@ function zip(...arrays) {
 	const length = Math.min(...arrays.map(arr => arr.length));
 	return Array.from({ length }, (_, i) => arrays.map(arr => arr[i]));
 }
-function get_region_limit(url, max_limit = 20) {
+function get_region_limit(url, max_limit = 30) {
 	// 限制地区和数量的参数
 	const region = (url.searchParams.get('region') || "HK-US").split('-');
 	const limit = (url.searchParams.get('limit') || "5-5").split('-');
 	const region_limit = zip(region, limit);
-	return region_limit.map(([region, limit]) => [region, Math.min(limit, max_limit)]);
+	return region_limit.map(([region, limit]) => [region, Math.min(parseInt(limit, 10), max_limit)]);
+}
+
+function get_limit(url, max_limit = 60) {
+	const limit = url.searchParams.get('limit') || "20";
+	return Math.min(parseInt(limit, 10), max_limit);
 }
 
 // 节点信息
@@ -381,14 +460,20 @@ export default {
 			case '/fetch':
 				return await handle_fetch(url);
 			case '/ip':
-				return await handle_ip(url, IP_URL);
-			case '/v2ray':
-				return await handle_v2ray(url, env, IP_URL);
-			case '/base64':
-				return await handle_base64(url, env, IP_URL);
-			case '/sub':
+				return await handle_ip(url, await cached_fetch_300(IP_URL));
+			case '/domain':
+				return await handle_domain(url, DOMAINS);
+			case '/ip/v2ray':
+			case '/ip/base64':
+				return await handle_ip_v2ray(url, env, await cached_fetch_300(IP_URL), url.pathname.endsWith('/base64'));
+			case '/domain/v2ray':
+			case '/domain/base64':
+				return await handle_domain_v2ray(url, env, DOMAINS, url.pathname.endsWith('/base64'));
+			case '/ip/sub':
+			case '/domain/sub':
 				return await handle_sub(url);
-			case '/clash':
+			case '/ip/clash':
+			case '/domain/clash':
 				return await handle_clash(url);
 			default:
 				return new Response('Hello World!');
