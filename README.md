@@ -27,9 +27,9 @@
 | ech= | ech-opts: {enable: true, query-server-name: cloudflare-ech.com} | EchCofigList | cloudflare-ech.com+https://223.5.5.5/dns-query |
 
 ## 部署方法
-1. 节点信息可以到源码中修改`CF_NODES`，注意：`vless://`等字符串做了防屏蔽，替换成了Base64。**可以灵活组合，实现混淆**。
+1. 节点信息可以到源码中修改`CF_NODES`，注意：`vless://`等字符串做了防屏蔽，替换成了Base64。**用户必须灵活组合，实现混淆**。
 
-| 编码 | 解码 | 结果 |
+| 编码 | 解码 | 结果 | 说明 |
 |-----------------|------------------------------------------|-----------|---|
 | btoa('trojan') | `${atob('dHJvamFu').toLowerCase()}://` | trojan:// | |
 | btoa('TroJan') | `${atob('VHJvSmFu').toLowerCase()}://` | trojan:// | |
@@ -37,7 +37,7 @@
 | btoa('VlesS') | `${atob('Vmxlc1M=').toLowerCase()}://` | vless:// | |
 | btoa('vless:/') | `${atob('dmxlc3M6Lw==').toLowerCase()}/` | vless:// | |
 | btoa('sS://') | `${atob('c1M6Ly8=').toLowerCase()}` | ss:// | |
-| btoa('vmess') | `${atob('dm1lc3M=').toLowerCase()}://` | vmess:// | 在CF节点上部署vmess协议也支持优选 |
+| btoa('vmess') | `${atob('dm1lc3M=').toLowerCase()}://` | vmess:// | 在CF部署vmess也支持优选 |
 
 ```javascript
 let CF_NODES = `
@@ -52,7 +52,7 @@ ${atob('dm1lc3M=').toLowerCase()}://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0K
 `;
 ```
 
-2. 也可以到`设置`->`变量和机密`，添加`文本`，变量名`CF_NODES`。注意：这里`vless/trojan/ss`需要保持原始字符串
+2. 也可以到`设置`->`变量和机密`，添加`文本`，变量名`CF_NODES`。注意：这里`vless/trojan/ss/vmess`必须保持原始字符串
 ```text
 
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
