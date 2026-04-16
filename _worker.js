@@ -421,7 +421,7 @@ async function handle_domain_v2ray(url, context, base64) {
 }
 
 function 生成订阅链接(url, target) {
-	const new_url = new URL(`${CONVERT_URL}/sub?target=${target}&insert=false&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`);
+	const new_url = new URL(`${CONVERT_URL}/sub?target=${target}&insert=false&emoji=false&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`);
 	new_url.searchParams.set('url', url);
 	new_url.searchParams.set('config', CONFIG_URL);
 	return new_url;
