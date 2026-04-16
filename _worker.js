@@ -15,7 +15,7 @@ ${atob('dm1lc3M=').toLowerCase()}://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0K
 // 自行搭建的非CF节点，无法使用优选IP域名，但可以统一放在这一起订阅管理
 let NOT_CF_NODES = `
 # 用#号忽略当前行
-# ${atob('dmxlc3M=').toLowerCase()}://00000000-0000-4000-8000-000000000000@127.0.01:80?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none#备注
+${atob('dmxlc3M=').toLowerCase()}://00000000-0000-4000-8000-000000000000@127.0.01:80?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none#备注
 
 `;
 
@@ -379,24 +379,54 @@ function domain_filter(domain_list, limit) {
 }
 
 async function handle_ip_v2ray(url, context, base64) {
-	const cf_nodes = parse_nodes(CF_NODES);
+	const filter = get_filter(url);
+	console.log(filter);
 	const not_cf_nodes = parse_nodes(NOT_CF_NODES);
-	const region_limit = get_region_limit(url);
-	let region_hostname = group_hostname_by_hash(parse_hostname_text(context));
-	region_hostname = hostname_filter(region_hostname, region_limit);
-	let 列表 = 更新链接列表([...region_hostname.values()].flat(), cf_nodes);
-	列表 = 调整链接列表(not_cf_nodes.concat(列表)).join("\n")
+	let cf_nodes_more = [];
+	let region_hostname = new Map();
+	let 列表 = [];
+	switch (filter) {
+		case 'not_cf_nodes':
+			列表 = not_cf_nodes;
+			break;
+		case 'cf_nodes':
+			region_hostname = hostname_filter(group_hostname_by_hash(parse_hostname_text(context)), get_region_limit(url));
+			cf_nodes_more = 更新链接列表([...region_hostname.values()].flat(), parse_nodes(CF_NODES));
+			列表 = cf_nodes_more;
+			break;
+		case 'both':
+		default:
+			region_hostname = hostname_filter(group_hostname_by_hash(parse_hostname_text(context)), get_region_limit(url));
+			cf_nodes_more = 更新链接列表([...region_hostname.values()].flat(), parse_nodes(CF_NODES));
+			列表 = not_cf_nodes.concat(cf_nodes_more);
+			break;
+	}
+	列表 = 调整链接列表(列表).join("\n")
 	if (base64) 列表 = btoa(列表);
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
 async function handle_domain_v2ray(url, context, base64) {
-	const cf_nodes = parse_nodes(CF_NODES);
+	const filter = get_filter(url);
+	console.log(filter);
 	const not_cf_nodes = parse_nodes(NOT_CF_NODES);
-	const limit = get_limit(url);
-	const domain_list = parse_hostname_text(context);
-	let 列表 = 更新链接列表(domain_filter(domain_list, limit), cf_nodes);
-	列表 = 调整链接列表(not_cf_nodes.concat(列表)).join("\n")
+	let cf_nodes_more = [];
+	let 列表 = [];
+	switch (filter) {
+		case 'not_cf_nodes':
+			列表 = not_cf_nodes;
+			break;
+		case 'cf_nodes':
+			cf_nodes_more = 更新链接列表(domain_filter(parse_hostname_text(context), get_limit(url)), parse_nodes(CF_NODES))
+			列表 = cf_nodes_more;
+			break;
+		case 'both':
+		default:
+			cf_nodes_more = 更新链接列表(domain_filter(parse_hostname_text(context), get_limit(url)), parse_nodes(CF_NODES))
+			列表 = not_cf_nodes.concat(cf_nodes_more);
+			break;
+	}
+	列表 = 调整链接列表(列表).join("\n")
 	if (base64) 列表 = btoa(列表);
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
@@ -509,6 +539,12 @@ function get_limit(url, max_limit = 60) {
 	const limit = url.searchParams.get('limit') || "20";
 	return Math.min(parseInt(limit, 10), max_limit);
 }
+function get_filter(url) {
+	// both,cf_nodes,not_cf_nodes
+	const filter = url.searchParams.get('filter');
+	return filter ? filter.toLowerCase() : "both";
+}
+
 function parse_nodes(inputText) {
 	console.log('parsing nodes');
 

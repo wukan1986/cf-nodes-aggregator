@@ -85,15 +85,24 @@ vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54
 6. 访问 `https://*.pages.dev/ip/singbox`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
 7. 所有 `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
 
+## 其他参数
+1. `filter`参数：所有的`/v2ray`、`/base64`、`/sub`、`/clash`、`/singbox`都支持。默认值为`both`。
+	- `cf_nodes`：返回`CF_NODES`变量扩增的优选节点
+	- `not_cf_nodes`：返回`NOT_CF_NODES`变量的固定节点
+	- `both`：返回`NOT_CF_NODES`和`CF_NODES`的节点组合，`NOT_CF_NODES`排前在`CF_NODES`前
+
+
 ## 推荐订阅设置
 ```html
-软件中订阅两条。因为域名比IP稳定，所以推荐平时用优选域名，需指定地区时再用优选IP
+软件中订阅两条。因为域名比IP稳定，基本不用重新订阅，所以推荐平时用优选域名，需指定地区时再用优选IP
 
 # 优选域名(推荐)
-https://*.pages.dev/domain/clash?limit=20
+https://*.pages.dev/domain/clash?limit=20&filter=cf_nodes
 # 优选IP
-https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
+https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10&filter=cf_nodes
 
+# 自建VPS节点，不想与优选节点混用，基本不用重新订阅
+https://*.pages.dev/domain/clash?limit=20&filter=not_cf_nodes
 ```
 
 ## 订阅指定UA
