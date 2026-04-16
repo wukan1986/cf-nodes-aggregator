@@ -69,17 +69,19 @@ trojan://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&typ
 1. 访问 `https://*.pages.dev/domain`，默认随机返回20条优选域名
 2. 访问 `https://*.pages.dev/domain/v2ray`，可以查看生成的`v2ray`信息
 3. 访问 `https://*.pages.dev/domain/base64`，可以查看生成的`v2ray`转`base64`格式信息
-4. 访问 `https://*.pages.dev/domain/sub`，可以查看`clash`新订阅地址，复制新地址到浏览器或各软件中即可
-5. 访问 `https://*.pages.dev/domain/clash`，本质是返回了`clash`新订阅地址所获取的数据
-6. 所有 `/domain/*`，都支持`limit`参数，例如：`https://*.pages.dev/domain?limit=10`
+4. 访问 `https://*.pages.dev/domain/sub`，可以查看新订阅地址，复制新地址到浏览器或各软件中即可
+5. 访问 `https://*.pages.dev/domain/clash`，本质是返回了`clash`转换地址所获取的数据，并做了调整
+6. 访问 `https://*.pages.dev/domain/singbox`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
+7. 所有 `/domain/*`，都支持`limit`参数，例如：`https://*.pages.dev/domain?limit=10`
 
 ## 优选IP使用方法(可以选定地区，但节点超时概率高)
 1. 访问 `https://*.pages.dev/ip`，默认随机返回`HK-US`地区的`IP`，每区5只
 2. 访问 `https://*.pages.dev/ip/v2ray`，可以查看生成的`v2ray`信息
 3. 访问 `https://*.pages.dev/ip/base64`，可以查看生成的`v2ray`转`base64`格式信息
-4. 访问 `https://*.pages.dev/ip/sub`，可以查看`clash`新订阅地址，复制新地址到浏览器或各软件中即可
-5. 访问 `https://*.pages.dev/ip/clash`，本质是返回了`clash`新订阅地址所获取的数据
-6. 所有 `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
+4. 访问 `https://*.pages.dev/ip/sub`，可以查看新订阅地址，复制新地址到浏览器或各软件中即可
+5. 访问 `https://*.pages.dev/ip/clash`，本质是返回了`clash`转换地址所获取的数据，并做了调整
+6. 访问 `https://*.pages.dev/ip/singbox`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
+7. 所有 `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
 
 ## 推荐订阅设置
 ```html
@@ -124,7 +126,7 @@ https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
 	2. `workers`修改调试方便，国内可搭配自定义域访问
 
 ## ECH
-发现目前网络上提供的`v2ray`转`clash`的服务都会丢失`ech`信息，本工具会试着补全`ECH`信息，
+发现目前网络上提供的`v2ray`转`clash/singbox`的服务都会丢失`ech`信息，本工具会试着补全`ECH`信息，
 底层会将`ech=1`标记在`path`字段，经过转换后，此字段还保留，可以被再次利用起来。
 
 `edgetunnel`和`cfnew`有对`DNS`覆写的功能，但改`yaml`实在麻烦，还是交给各客户端软件的覆写吧

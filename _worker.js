@@ -377,18 +377,22 @@ async function handle_domain_v2ray(url, context, base64) {
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-function 生成订阅链接(url) {
-	const new_url = new URL(`${CONVERT_URL}/sub?target=clash&emoji=false&scv=false`);
+function 生成订阅链接(url, target) {
+	const new_url = new URL(`${CONVERT_URL}/sub?target=${target}&emoji=false&scv=false`);
 	new_url.searchParams.set('url', url);
 	new_url.searchParams.set('config', CONFIG_URL);
 	return new_url;
 }
 async function handle_sub(url) {
-	let url_sub = new URL(url);
-	url_sub.pathname = url_sub.pathname.replace('/sub', '/base64');
-	url_sub = 生成订阅链接(url_sub);
+	const sub_clash = new URL(url);
+	sub_clash.pathname = sub_clash.pathname.replace('/sub', '/base64');
+	const sub_singbox = new URL(url);
+	sub_singbox.pathname = sub_singbox.pathname.replace('/sub', '/base64');
+
 	const url_clash = new URL(url);
 	url_clash.pathname = url_clash.pathname.replace('/sub', '/clash');
+	const url_singbox = new URL(url);
+	url_singbox.pathname = url_singbox.pathname.replace('/sub', '/singbox');
 
 	const htmlContent = `
 <!DOCTYPE html>
@@ -398,11 +402,17 @@ async function handle_sub(url) {
     <h3>订阅链接</h3>
     <p><strong>警告：</strong>通过以下链接订阅，ech 信息会丢失。部分节点开启 ech 反而无法上网</p>
     <div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
-        ${url_sub}
+        ${生成订阅链接(sub_clash, 'clash')}
     </div>
-	<p><strong></strong>通过以下链接订阅，ech 信息会根据配置参数尝试修复</p>
+	<div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
+        ${生成订阅链接(sub_singbox, 'singbox')}
+    </div>
+	<p><strong>提示：</strong>通过以下链接订阅，ech 信息会根据配置参数尝试修复</p>
 	<div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
         ${url_clash}
+    </div>
+	<div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
+        ${url_singbox}
     </div>
     <p>请复制上面的链接到您的客户端中使用</p>
 </body>
@@ -411,20 +421,47 @@ async function handle_sub(url) {
 	return new Response(htmlContent, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-function add_ech_to_yaml(yamlString) {
+function add_ech_to_clash(yamlString) {
 	return yamlString.replace(
 		/(ws-opts.*?ech=1.*?)(}})(?![^}]*ech-opts)/g,
 		`$1}}, ech-opts: {enable: true, query-server-name: ${ECH_SNI}}`
 	);
 }
+
+function add_ech_to_singbox(jsonString) {
+	let config = JSON.parse(jsonString);
+	config.outbounds.forEach(outbound => {
+		// 检查是否有transport配置且path中包含ech=1
+		if (outbound.transport &&
+			outbound.transport.path &&
+			outbound.transport.path.includes("ech=1") &&
+			outbound.tls &&
+			outbound.tls.enabled) {
+
+			outbound.tls.ech = {
+				"enabled": true,
+				"query_server_name": ECH_SNI
+			};
+		}
+	});
+	return JSON.stringify(config, null, 2);
+}
 async function handle_clash(url) {
 	let url_sub = new URL(url);
 	url_sub.pathname = url_sub.pathname.replace('/clash', '/base64');
-	url_sub = 生成订阅链接(url_sub);
+	url_sub = 生成订阅链接(url_sub, 'clash');
 	// 订阅转换ech丢失，需要后期添加
 	const content = await cached_fetch_15(url_sub.href);
-	const updatedYaml = add_ech_to_yaml(content);
-	return new Response(updatedYaml, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	return new Response(add_ech_to_clash(content), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+}
+
+async function handle_singbox(url) {
+	let url_sub = new URL(url);
+	url_sub.pathname = url_sub.pathname.replace('/singbox', '/base64');
+	url_sub = 生成订阅链接(url_sub, 'singbox');
+	// 订阅转换ech丢失，需要后期添加
+	const content = await cached_fetch_15(url_sub.href);
+	return new Response(add_ech_to_singbox(content), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
 function stringToBoolean(str) {
@@ -493,6 +530,11 @@ export default {
 				CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
 				CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
 				return await handle_clash(url);
+			case '/ip/singbox':
+			case '/domain/singbox':
+				CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
+				CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
+				return await handle_singbox(url);
 			default:
 				return new Response('Hello World!');
 		}
