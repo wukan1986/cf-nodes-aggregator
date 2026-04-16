@@ -1,4 +1,15 @@
-﻿// 注意：为防代码被拦截，vless/trojan/ss被替换了
+﻿
+// TODO 一定要修改，可以一起使用，如/domain/v2ray?token=NOT_CF_NODES&token=CF_NODES
+let TOKENS = `
+# 第1条，授权返回 CF_NODES 优选节点的信息
+CF节点
+
+# 第2条，授权返回 NOT_CF_NODES 固定节点的信息 
+非CF
+
+`;
+
+// 注意：为防代码被拦截，vless/trojan/ss被替换了
 
 // CF节点信息，只替换hostname和port就可以实现优选
 let CF_NODES = `
@@ -379,27 +390,15 @@ function domain_filter(domain_list, limit) {
 }
 
 async function handle_ip_v2ray(url, context, base64) {
-	const filter = get_filter(url);
-	console.log(filter);
-	const not_cf_nodes = parse_nodes(NOT_CF_NODES);
-	let cf_nodes_more = [];
-	let region_hostname = new Map();
+	const _TOKENS = parse_new_line(TOKENS);
+	const tokens = get_tokens(url);
 	let 列表 = [];
-	switch (filter) {
-		case 'not_cf_nodes':
-			列表 = not_cf_nodes;
-			break;
-		case 'cf_nodes':
-			region_hostname = hostname_filter(group_hostname_by_hash(parse_hostname_text(context)), get_region_limit(url));
-			cf_nodes_more = 更新链接列表([...region_hostname.values()].flat(), parse_nodes(CF_NODES));
-			列表 = cf_nodes_more;
-			break;
-		case 'both':
-		default:
-			region_hostname = hostname_filter(group_hostname_by_hash(parse_hostname_text(context)), get_region_limit(url));
-			cf_nodes_more = 更新链接列表([...region_hostname.values()].flat(), parse_nodes(CF_NODES));
-			列表 = not_cf_nodes.concat(cf_nodes_more);
-			break;
+	if (tokens.includes(_TOKENS[1])) {
+		列表 = 列表.concat(parse_new_line(NOT_CF_NODES));
+	}
+	if (tokens.includes(_TOKENS[0])) {
+		const region_hostname = hostname_filter(group_hostname_by_hash(parse_hostname_text(context)), get_region_limit(url));
+		列表 = 列表.concat(更新链接列表([...region_hostname.values()].flat(), parse_new_line(CF_NODES)));
 	}
 	列表 = 调整链接列表(列表).join("\n")
 	if (base64) 列表 = btoa(列表);
@@ -407,24 +406,14 @@ async function handle_ip_v2ray(url, context, base64) {
 }
 
 async function handle_domain_v2ray(url, context, base64) {
-	const filter = get_filter(url);
-	console.log(filter);
-	const not_cf_nodes = parse_nodes(NOT_CF_NODES);
-	let cf_nodes_more = [];
+	const _TOKENS = parse_new_line(TOKENS);
+	const tokens = get_tokens(url);
 	let 列表 = [];
-	switch (filter) {
-		case 'not_cf_nodes':
-			列表 = not_cf_nodes;
-			break;
-		case 'cf_nodes':
-			cf_nodes_more = 更新链接列表(domain_filter(parse_hostname_text(context), get_limit(url)), parse_nodes(CF_NODES))
-			列表 = cf_nodes_more;
-			break;
-		case 'both':
-		default:
-			cf_nodes_more = 更新链接列表(domain_filter(parse_hostname_text(context), get_limit(url)), parse_nodes(CF_NODES))
-			列表 = not_cf_nodes.concat(cf_nodes_more);
-			break;
+	if (tokens.includes(_TOKENS[1])) {
+		列表 = 列表.concat(parse_new_line(NOT_CF_NODES));
+	}
+	if (tokens.includes(_TOKENS[0])) {
+		列表 = 列表.concat(更新链接列表(domain_filter(parse_hostname_text(context), get_limit(url)), parse_new_line(CF_NODES)));
 	}
 	列表 = 调整链接列表(列表).join("\n")
 	if (base64) 列表 = btoa(列表);
@@ -539,15 +528,11 @@ function get_limit(url, max_limit = 60) {
 	const limit = url.searchParams.get('limit') || "20";
 	return Math.min(parseInt(limit, 10), max_limit);
 }
-function get_filter(url) {
-	// both,cf_nodes,not_cf_nodes
-	const filter = url.searchParams.get('filter');
-	return filter ? filter.toLowerCase() : "both";
+function get_tokens(url) {
+	return url.searchParams.getAll('token') || [];
 }
 
-function parse_nodes(inputText) {
-	console.log('parsing nodes');
-
+function parse_new_line(inputText) {
 	return inputText
 		.split('\n')
 		.map(line => line.trim())
@@ -560,42 +545,35 @@ export default {
 	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
 
+		TOKENS = env.TOKENS || TOKENS;
+		CF_NODES = env.CF_NODES || CF_NODES;
+		NOT_CF_NODES = env.NOT_CF_NODES || NOT_CF_NODES;
+		CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
+		CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
+		BEST_IP_URL = env.BEST_DOMAINS || BEST_IP_URL;
+		BEST_DOMAINS = env.BEST_DOMAINS || BEST_DOMAINS;
 
 		switch (url.pathname) {
 			case '/fetch':
 				return await handle_fetch(url);
 			case '/ip':
-				BEST_IP_URL = env.BEST_DOMAINS || BEST_IP_URL;
 				return await handle_ip(url, await cached_fetch_300(BEST_IP_URL));
 			case '/domain':
-				BEST_DOMAINS = env.BEST_DOMAINS || BEST_DOMAINS;
 				return await handle_domain(url, BEST_DOMAINS);
 			case '/ip/v2ray':
 			case '/ip/base64':
-				BEST_IP_URL = env.BEST_DOMAINS || BEST_IP_URL;
-				CF_NODES = env.CF_NODES || CF_NODES;
-				NOT_CF_NODES = env.NOT_CF_NODES || NOT_CF_NODES;
 				return await handle_ip_v2ray(url, await cached_fetch_300(BEST_IP_URL), url.pathname.endsWith('/base64'));
 			case '/domain/v2ray':
 			case '/domain/base64':
-				BEST_DOMAINS = env.BEST_DOMAINS || BEST_DOMAINS;
-				CF_NODES = env.CF_NODES || CF_NODES;
-				NOT_CF_NODES = env.NOT_CF_NODES || NOT_CF_NODES;
 				return await handle_domain_v2ray(url, BEST_DOMAINS, url.pathname.endsWith('/base64'));
 			case '/ip/sub':
 			case '/domain/sub':
-				CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
-				CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
 				return await handle_sub(url);
 			case '/ip/clash':
 			case '/domain/clash':
-				CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
-				CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
 				return await handle_clash(url);
 			case '/ip/singbox':
 			case '/domain/singbox':
-				CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
-				CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
 				return await handle_singbox(url);
 			default:
 				return new Response('Hello World!');

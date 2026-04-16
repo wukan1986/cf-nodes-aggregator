@@ -63,33 +63,45 @@ vless://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type
 vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
 
 ```
-4. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/domain/v2ray`，查看效果
+4. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/domain/v2ray?token=CF节点`，查看效果
 5. 注意：`Pages`部署方式需要再上传一次，对`CF_NODES`环境变量的修改才会生效
 6. 如果是**非CF**节点，无法享受优选功能，可以将其当成一个节点汇集工具，将节点连接填写入`NOT_CF_NODES`中。它将**保持原样**，并排在`CF_NODES`之前
 
 ## 优选域名使用方法(无法决定地区，节点超时概率低，推荐使用)
 1. 访问 `https://*.pages.dev/domain`，默认随机返回20条优选域名
-2. 访问 `https://*.pages.dev/domain/v2ray`，可以查看生成的`v2ray`信息
-3. 访问 `https://*.pages.dev/domain/base64`，可以查看生成的`v2ray`转`base64`格式信息
-4. 访问 `https://*.pages.dev/domain/sub`，可以查看新订阅地址，复制新地址到浏览器或各软件中即可
-5. 访问 `https://*.pages.dev/domain/clash`，本质是返回了`clash`转换地址所获取的数据，并做了调整
-6. 访问 `https://*.pages.dev/domain/singbox`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
-7. 所有 `/domain/*`，都支持`limit`参数，例如：`https://*.pages.dev/domain?limit=10`
+2. 访问 `https://*.pages.dev/domain/v2ray&token=CF节点`，可以查看生成的`v2ray`信息
+3. 访问 `https://*.pages.dev/domain/base64&token=CF节点`，可以查看生成的`v2ray`转`base64`格式信息
+4. 访问 `https://*.pages.dev/domain/sub&token=CF节点`，可以查看新订阅地址，复制新地址到浏览器或各软件中即可
+5. 访问 `https://*.pages.dev/domain/clash&token=CF节点`，本质是返回了`clash`转换地址所获取的数据，并做了调整
+6. 访问 `https://*.pages.dev/domain/singbox&token=CF节点`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
+7. 所有 `/domain/*`，都支持`limit`参数，例如：`https://*.pages.dev/domain?limit=10&token=CF节点`
 
 ## 优选IP使用方法(可以选定地区，但节点超时概率高)
 1. 访问 `https://*.pages.dev/ip`，默认随机返回`HK-US`地区的`IP`，每区5只
-2. 访问 `https://*.pages.dev/ip/v2ray`，可以查看生成的`v2ray`信息
-3. 访问 `https://*.pages.dev/ip/base64`，可以查看生成的`v2ray`转`base64`格式信息
-4. 访问 `https://*.pages.dev/ip/sub`，可以查看新订阅地址，复制新地址到浏览器或各软件中即可
-5. 访问 `https://*.pages.dev/ip/clash`，本质是返回了`clash`转换地址所获取的数据，并做了调整
-6. 访问 `https://*.pages.dev/ip/singbox`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
-7. 所有 `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
+2. 访问 `https://*.pages.dev/ip/v2ray&token=CF节点`，可以查看生成的`v2ray`信息
+3. 访问 `https://*.pages.dev/ip/base64&token=CF节点`，可以查看生成的`v2ray`转`base64`格式信息
+4. 访问 `https://*.pages.dev/ip/sub&token=CF节点`，可以查看新订阅地址，复制新地址到浏览器或各软件中即可
+5. 访问 `https://*.pages.dev/ip/clash&token=CF节点`，本质是返回了`clash`转换地址所获取的数据，并做了调整
+6. 访问 `https://*.pages.dev/ip/singbox&token=CF节点`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
+7. 所有 `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10&token=CF节点`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
 
-## 其他参数
-1. `filter`参数：所有的`/v2ray`、`/base64`、`/sub`、`/clash`、`/singbox`都支持。默认值为`both`。
-	- `cf_nodes`：返回`CF_NODES`变量扩增的优选节点
-	- `not_cf_nodes`：返回`NOT_CF_NODES`变量的固定节点
-	- `both`：返回`NOT_CF_NODES`和`CF_NODES`的节点组合，`NOT_CF_NODES`排前在`CF_NODES`前
+## token参数
+所有的`/v2ray`、`/base64`、`/sub`、`/clash`、`/singbox`都需要提供`token`参数。
+- `token=CF节点`：授权返回`CF_NODES`变量扩展的CF优选节点
+- `token=非CF`：授权返回`NOT_CF_NODES`变量的固定节点
+- `token=非CF&token=CF节点`：返回两组组合
+
+可以到`设置`->`变量和机密`，添加`文本`，变量名`TOKENS`,例如：
+```text
+# 第1条，授权返回 CF_NODES 优选节点的信息
+ecae4617
+# 第2条，授权返回 NOT_CF_NODES 固定节点的信息 
+2ffbae0a-c425
+```
+想同时订阅两组节点，可以设置为
+```
+https://*.pages.dev/domain/clash&limit=20&token=ecae4617&token=2ffbae0a-c425
+```
 
 
 ## 推荐订阅设置
@@ -97,12 +109,12 @@ vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54
 软件中订阅两条。因为域名比IP稳定，基本不用重新订阅，所以推荐平时用优选域名，需指定地区时再用优选IP
 
 # 优选域名(推荐)
-https://*.pages.dev/domain/clash?limit=20&filter=cf_nodes
+https://*.pages.dev/domain/clash?limit=20&token=CF节点
 # 优选IP
-https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10&filter=cf_nodes
+https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10&token=CF节点
 
 # 自建VPS节点，不想与优选节点混用，基本不用重新订阅
-https://*.pages.dev/domain/clash?limit=20&filter=not_cf_nodes
+https://*.pages.dev/domain/clash?limit=20&token=非CF
 ```
 
 ## 订阅指定UA
@@ -114,6 +126,7 @@ https://*.pages.dev/domain/clash?limit=20&filter=not_cf_nodes
 ## 全部环境变量
 | 变量名 | 说明 | 默认值 |
 |---|---|---|
+| TOKENS | 不同的token返回不同的节点，可以同时使用 | CF节点<br/>非CF |
 | CF_NODES | CF节点信息。**可以**根据优选域名IP增加节点 | |
 | NOT_CF_NODES | 非CF节点信息。**不可以**根据优选域名IP增加节点 | |
 | CONVERT_URL | v2ray转clash服务 | https://subapi.cmliussss.net |
@@ -126,7 +139,7 @@ https://*.pages.dev/domain/clash?limit=20&filter=not_cf_nodes
 
 ## 其他问题
 1. `workers.dev`地址无法访问怎么办？
-	1. 临时可以科学上网，访问`https://*.workers.dev/sub`得到的新地址一般可以直接访问
+	1. 临时可以科学上网，访问`https://*.workers.dev/sub&token=CF_NODES`得到的新地址一般可以直接访问
 	2. 部署成`Pages`, `*.pages.dev`一般是可以直接访问的
 	3. 添加自定义域，用新域名访问也可以
 2. 如何知道某个`uuid`和`sni`失效了？
