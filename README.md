@@ -103,17 +103,15 @@ https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
 4. 此功能也能解决部分订阅地址无法直接访问的的场景
 
 ## 全部环境变量
-| 变量名 | 默认值 | 说明 |
+| 变量名 | 说明 | 默认值 |
 |---|---|---|
-| CF_NODES | | CF节点信息。**可以**根据优选域名IP增加节点 |
-| NOT_CF_NODES | | 非CF节点信息。**不可以**根据优选域名IP增加节点 |
-| CONVERT_URL | https://subapi.cmliussss.net | v2ray转clash服务 |
-| CONFIG_URL | [^1] | Clash模板文件 |
-| BEST_IP_URL | [^2] | 优选IP |
-| BEST_DOMAINS | | 优选域名。用户可将自己手工选出的**优选IP**也添加到此变量中 |
+| CF_NODES | CF节点信息。**可以**根据优选域名IP增加节点 | |
+| NOT_CF_NODES | 非CF节点信息。**不可以**根据优选域名IP增加节点 | |
+| CONVERT_URL | v2ray转clash服务 | https://subapi.cmliussss.net |
+| CONFIG_URL | Clash模板文件 | https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini |
+| BEST_IP_URL | 优选IP | https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt |
+| BEST_DOMAINS | 优选域名。用户可将自己手工选出的**优选IP**也添加到此变量中 | |
 
-[^1]: https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini
-[^2]: https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt
 
 ## 其他问题
 1. `workers.dev`地址无法访问怎么办？
