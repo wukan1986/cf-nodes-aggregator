@@ -30,23 +30,24 @@
 1. 节点信息可以到源码中修改`CF_NODES`，注意：`vless://`等字符串做了防屏蔽，替换成了Base64。**可以灵活组合，实现混淆**。
 
 | 编码 | 解码 | 结果 |
-|-----------------|------------------------------------------|-----------|
-| btoa('trojan') | `${atob('dHJvamFu').toLowerCase()}://` | trojan:// |
-| btoa('TroJan') | `${atob('VHJvSmFu').toLowerCase()}://` | trojan:// |
-| btoa('vless') | `${atob('dmxlc3M=').toLowerCase()}://` | vless:// |
-| btoa('VlesS') | `${atob('Vmxlc1M=').toLowerCase()}://` | vless:// |
-| btoa('vless:/') | `${atob('dmxlc3M6Lw==').toLowerCase()}/` | vless:// |
-| btoa('sS://') | `${atob('c1M6Ly8=').toLowerCase()}` | ss:// |
-
+|-----------------|------------------------------------------|-----------|---|
+| btoa('trojan') | `${atob('dHJvamFu').toLowerCase()}://` | trojan:// | |
+| btoa('TroJan') | `${atob('VHJvSmFu').toLowerCase()}://` | trojan:// | |
+| btoa('vless') | `${atob('dmxlc3M=').toLowerCase()}://` | vless:// | |
+| btoa('VlesS') | `${atob('Vmxlc1M=').toLowerCase()}://` | vless:// | |
+| btoa('vless:/') | `${atob('dmxlc3M6Lw==').toLowerCase()}/` | vless:// | |
+| btoa('sS://') | `${atob('c1M6Ly8=').toLowerCase()}` | ss:// | |
+| btoa('vmess') | `${atob('dm1lc3M=').toLowerCase()}://` | vmess:// | 在CF节点上部署vmess协议也支持优选 |
 
 ```javascript
-
 let CF_NODES = `
 
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
 ${atob('VHJvSmFu').toLowerCase()}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
 ${atob('Vmxlc1M=').toLowerCase()}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
+# https://sub.xxcode.cc.cd/sub/CMQn3Tzisf?token=cpimNgEa
+${atob('dm1lc3M=').toLowerCase()}://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
 
 `;
 ```
@@ -55,10 +56,11 @@ ${atob('Vmxlc1M=').toLowerCase()}://11111111-1111-4111-8111-111111111111@ct.0902
 ```text
 
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-vless://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
-
+trojan://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-trojan://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
+vless://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
+# https://sub.xxcode.cc.cd/sub/CMQn3Tzisf?token=cpimNgEa
+vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
 
 ```
 4. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/domain/v2ray`，查看效果

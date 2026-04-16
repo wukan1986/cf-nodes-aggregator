@@ -7,6 +7,9 @@ let CF_NODES = `
 ${atob('VHJvSmFu').toLowerCase()}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
 ${atob('Vmxlc1M=').toLowerCase()}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
+# https://sub.xxcode.cc.cd/sub/CMQn3Tzisf?token=cpimNgEa
+${atob('dm1lc3M=').toLowerCase()}://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
+
 `;
 
 // 自行搭建的非CF节点，无法使用优选IP域名，但可以统一放在这一起订阅管理
@@ -293,17 +296,37 @@ async function handle_fetch(url) {
 	return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
 }
 
+// 解码：Latin-1字符串 -> UTF-8字节 -> 正常字符串
+const decodeGarbledText = s => new TextDecoder().decode(Uint8Array.from(s, c => c.charCodeAt()));
+// 编码：字符串 -> UTF-8字节 -> Latin-1字符串
+const encodeToGarbled = s => new TextEncoder().encode(s).reduce((str, byte) => str + String.fromCharCode(byte), '');
+
+
 function 更新协议链接(url, hostname, port, hash) {
-	const url1 = new URL(url);
-	const uuid = url1.username;
-	const security = url1.searchParams.get('security');
-	url1.hostname = hostname;
-	url1.port = port ? port : security === 'tls' ? 443 : 80;
-	url1.hash = `${uuid.slice(0, 4)}|${hash}`;
-	return url1.href;
+	if (url.startsWith('vmess://')) {
+		// vmess
+		const config = JSON.parse(atob(url.substring(8)));
+		config.add = hostname;
+		config.port = port ? port : config.tls === 'tls' ? '443' : '80';
+		config.ps = encodeToGarbled(`${config.id.slice(0, 4)}|${hash}`);
+		return 'vmess://' + btoa(JSON.stringify(config, null, 0));
+	}
+	else {
+		// vless/trojan/ss
+		const url1 = new URL(url);
+		const uuid = url1.username;
+		const security = url1.searchParams.get('security');
+		url1.hostname = hostname;
+		url1.port = port ? port : security === 'tls' ? 443 : 80;
+		url1.hash = `${uuid.slice(0, 4)}|${hash}`;
+		return url1.href;
+	}
 }
 
 function 调整协议链接(url) {
+	if (url.startsWith('vmess://'))
+		return url;
+
 	const url1 = new URL(url);
 	const path = url1.searchParams.get('path');
 	if (!path) return url;
@@ -496,9 +519,11 @@ function parse_nodes(inputText) {
 }
 
 
+
 export default {
 	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
+
 
 		switch (url.pathname) {
 			case '/fetch':
