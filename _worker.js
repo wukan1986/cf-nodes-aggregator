@@ -321,6 +321,7 @@ function 调整协议链接(url) {
 }
 
 function 更新链接列表(addresses, nodes) {
+	if (nodes.length === 0) return [];
 	return addresses.map(({ hostname, port, hash, remark }, i) => {
 		const url = nodes[i % nodes.length];
 		return 更新协议链接(url, hostname, port, remark);
@@ -378,7 +379,7 @@ async function handle_domain_v2ray(url, context, base64) {
 }
 
 function 生成订阅链接(url, target) {
-	const new_url = new URL(`${CONVERT_URL}/sub?target=${target}&emoji=false&scv=false`);
+	const new_url = new URL(`${CONVERT_URL}/sub?target=${target}&insert=false&emoji=true&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`);
 	new_url.searchParams.set('url', url);
 	new_url.searchParams.set('config', CONFIG_URL);
 	return new_url;
