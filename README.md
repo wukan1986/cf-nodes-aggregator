@@ -6,15 +6,15 @@
 所以，我提供了一个工具，用来归集各组`UUID`和`SNI`，实现一个订阅，平均调用所有的节点
 
 ## 原理
-目前大家部署的`edgetunnel`和`cfnew`等`CF`项目，只要提供可用的`vless`链接，将此链接中的`hostname`、`port`修改成优选的IP或域名，就可以生成无数新链接
+目前大家部署的`edgetunnel`和`cfnew`等`CF`项目，只要提供可用的`vless/trojan/ss`链接，将此链接中的`hostname`、`port`修改成优选的IP或域名，就可以生成无数新链接
 
 ## 如何获取vless链接
-1. `edgetunnel`的后台面板直接提供了原始`vless`链接
-2. `edgetunnel`的订阅连接直接用浏览器打开获取`vless`链接
-3. `v2rayN`中选中一个`vless`节点，右键导出，导出分享链接到剪贴板
-4. 根据`clash`配置，在`v2rayN`中同样设置，测试通过后，再导出`vless`链接。以下是对照表
+1. `edgetunnel`的后台面板直接提供了原始`vless/trojan/ss`链接
+2. `edgetunnel`的订阅连接直接用浏览器打开获取`vless/trojan/ss`链接
+3. `v2rayN`中选中一个`vless/trojan/ss`节点，右键导出，导出分享链接到剪贴板
+4. 如果只有`clash`配置，在`v2rayN`中对照设置，**测试真连延迟**后，再导出`vless/trojan/ss`链接。以下是对照表
 
-| vless | clash | v2rayN | 示例 |
+| vless/trojan | clash | v2rayN | 示例 |
 |---|---|---|---|
 | hostname | server | 地址(address) | www.temu.com 或 127.0.0.1 |
 | port | port | 端口(port) | 443 |
@@ -27,31 +27,43 @@
 | ech= | ech-opts: {enable: true, query-server-name: cloudflare-ech.com} | EchCofigList | cloudflare-ech.com+https://223.5.5.5/dns-query |
 
 ## 部署方法
-1. 节点信息可以到源码中修改`CF_NODES`，注意：`vless`字符为防屏蔽，替换成了Base64`${atob('dmxlc3M=')}`
+1. 节点信息可以到源码中修改`CF_NODES`，注意：`vless://`等字符串做了防屏蔽，替换成了Base64。**可以灵活组合，实现混淆**。
+
+| 编码 | 解码 | 结果 |
+|-----------------|------------------------------------------|-----------|
+| btoa('trojan') | `${atob('dHJvamFu').toLowerCase()}://` | trojan:// |
+| btoa('TroJan') | `${atob('VHJvSmFu').toLowerCase()}://` | trojan:// |
+| btoa('vless') | `${atob('dmxlc3M=').toLowerCase()}://` | vless:// |
+| btoa('VlesS') | `${atob('Vmxlc1M=').toLowerCase()}://` | vless:// |
+| btoa('vless:/') | `${atob('dmxlc3M6Lw==').toLowerCase()}/` | vless:// |
+| btoa('sS://') | `${atob('c1M6Ly8=').toLowerCase()}` | ss:// |
+
+
 ```javascript
 
 let CF_NODES = `
 
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-${atob('dmxlc3M=')}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fech%3D1#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
+${atob('VHJvSmFu').toLowerCase()}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-${atob('dmxlc3M=')}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fed%3D2095#1111|%E7%94%B5%E4%BF%A1090227
+${atob('Vmxlc1M=').toLowerCase()}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
 
 `;
 ```
 
-2. 也可以到`设置`->`变量和机密`，添加`文本`，变量名`CF_NODES`。注意：这里`vless`需要保持原始字符串
+2. 也可以到`设置`->`变量和机密`，添加`文本`，变量名`CF_NODES`。注意：这里`vless/trojan/ss`需要保持原始字符串
 ```text
 
 # https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-vless://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fech%3D1#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
+vless://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
 
 # https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-vless://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fed%3D2095#1111|%E7%94%B5%E4%BF%A1090227
+trojan://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
 
 ```
 4. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/domain/v2ray`，查看效果
 5. 注意：`Pages`部署方式需要再上传一次，对`CF_NODES`环境变量的修改才会生效
+6. 如果是**非CF**节点，无法享受优选功能，可以将其当成一个节点汇集工具，将节点连接填写入`NOT_CF_NODES`中。它将**保持原样**，并排在`CF_NODES`之前
 
 ## 优选域名使用方法(无法决定地区，节点超时概率低，推荐使用)
 1. 访问 `https://*.pages.dev/domain`，默认随机返回20条优选域名
@@ -67,16 +79,17 @@ vless://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type
 3. 访问 `https://*.pages.dev/ip/base64`，可以查看生成的`v2ray`转`base64`格式信息
 4. 访问 `https://*.pages.dev/ip/sub`，可以查看`clash`新订阅地址，复制新地址到浏览器或各软件中即可
 5. 访问 `https://*.pages.dev/ip/clash`，本质是返回了`clash`新订阅地址所获取的数据
-6. `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
+6. 所有 `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
 
 ## 推荐订阅设置
 ```html
-软件中订阅两条。因为域名比IP稳定，所以平时用优选域名，需指定地区时再用优选IP
+软件中订阅两条。因为域名比IP稳定，所以推荐平时用优选域名，需指定地区时再用优选IP
 
-# 优选域名
+# 优选域名(推荐)
 https://*.pages.dev/domain/clash?limit=20
 # 优选IP
 https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
+
 ```
 
 ## 订阅指定UA
@@ -88,12 +101,12 @@ https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
 ## 全部环境变量
 | 变量名 | 默认值 | 说明 |
 |---|---|---|
-| CF_NODES | | CF节点信息。**可以**根据优选域名增加节点 |
-| NOT_CF_NODES | | 非CF节点信息。**不可以**根据优选域名增加节点 |
+| CF_NODES | | CF节点信息。**可以**根据优选域名IP增加节点 |
+| NOT_CF_NODES | | 非CF节点信息。**不可以**根据优选域名IP增加节点 |
 | CONVERT_URL | https://subapi.cmliussss.net | v2ray转clash服务 |
 | CONFIG_URL | [^1] | Clash模板文件 |
 | BEST_IP_URL | [^2] | 优选IP |
-| BEST_DOMAINS | | 优选域名。用户可将自己手工选出的优选IP也添加到此变量中 |
+| BEST_DOMAINS | | 优选域名。用户可将自己手工选出的**优选IP**也添加到此变量中 |
 
 [^1]: https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini
 [^2]: https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt
@@ -111,8 +124,8 @@ https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10
 	2. `workers`修改调试方便，国内可搭配自定义域访问
 
 ## ECH
-发现目前网络上提供的`v2ray`转`clash`的服务都会丢失`ech`信息，本工具会试着补全`ECH`信息，但需要配置文件的`ech`字段为`true`，
-底层会将`ech`信息保存在`path`字段，经过转换后，此字段还保留，可以被再次利用起来。
+发现目前网络上提供的`v2ray`转`clash`的服务都会丢失`ech`信息，本工具会试着补全`ECH`信息，
+底层会将`ech=1`标记在`path`字段，经过转换后，此字段还保留，可以被再次利用起来。
 
 `edgetunnel`和`cfnew`有对`DNS`覆写的功能，但改`yaml`实在麻烦，还是交给各客户端软件的覆写吧
 

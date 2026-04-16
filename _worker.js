@@ -1,18 +1,18 @@
-﻿// 注意：为防代码被拦截，链接vless被替换成了${atob('dmxlc3M=')}
+﻿// 注意：为防代码被拦截，vless/trojan/ss被替换了
 
 // CF节点信息，只替换hostname和port就可以实现优选
 let CF_NODES = `
-# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-${atob('dmxlc3M=')}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fech%3D1#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
-# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-${atob('dmxlc3M=')}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2Fproxyip%3Dproxyip.cmliussss.net%3Fed%3D2095#1111|%E7%94%B5%E4%BF%A1090227
 
+# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
+${atob('VHJvSmFu').toLowerCase()}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
+# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
+${atob('Vmxlc1M=').toLowerCase()}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
 `;
 
 // 自行搭建的非CF节点，无法使用优选IP域名，但可以统一放在这一起订阅管理
 let NOT_CF_NODES = `
 # 用#号忽略当前行
-# ${atob('dmxlc3M=')}://00000000-0000-4000-8000-000000000000@127.0.01:80?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none#备注
+# ${atob('dmxlc3M=').toLowerCase()}://00000000-0000-4000-8000-000000000000@127.0.01:80?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none#备注
 
 `;
 
@@ -233,15 +233,15 @@ async function fetch_url(url) {
 const cached_fetch_300 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 300 });
 const cached_fetch_15 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 15 });
 
-function parse_ip_item(line) {
+function parse_hostname_item(line) {
 	const url = new URL("https://" + line);
-	const ip = url.hostname;
+	const hostname = url.hostname;
 	const hash = decodeURIComponent(url.hash ? url.hash.substring(1) : ''); // 去掉#
 	const port = url.port; // 没写就为空
-	return { ip, port, hash };
+	return { hostname, port, hash };
 }
 
-function parse_ip_text(content) {
+function parse_hostname_text(content) {
 	if (!content) return [];
 
 	const processedContent = content.includes(',') && !content.includes('\n')
@@ -252,10 +252,10 @@ function parse_ip_text(content) {
 		.split('\n')
 		.map(line => line.trim())
 		.filter(line => line)
-		.map(line => parse_ip_item(line));
+		.map(line => parse_hostname_item(line));
 }
 
-function group_ip_list_by_hash(ipList) {
+function group_hostname_by_hash(ipList) {
 	const grouped = Object.groupBy(ipList, item => item.hash);
 	// 返回的是对象，键是hash值，值是数组
 	// 如果需要Map格式，可以转换
@@ -263,22 +263,22 @@ function group_ip_list_by_hash(ipList) {
 }
 
 function 生成地址列表(addresses) {
-	return addresses.map(({ ip, port, hash, remark }) =>
-		port ? `${ip}:${port}#${remark}` : `${ip}#${remark}`
+	return addresses.map(({ hostname, port, hash, remark }) =>
+		port ? `${hostname}:${port}#${remark}` : `${hostname}#${remark}`
 	);
 }
 
 async function handle_ip(url, context) {
 	const region_limit = get_region_limit(url);
-	const region_ip = group_ip_list_by_hash(parse_ip_text(context));
-	const new_region_ip = ip_filter(region_ip, region_limit);
-	let 列表 = 生成地址列表([...new_region_ip.values()].flat()).join("\n")
+	let region_hostname = group_hostname_by_hash(parse_hostname_text(context));
+	region_hostname = hostname_filter(region_hostname, region_limit);
+	let 列表 = 生成地址列表([...region_hostname.values()].flat()).join("\n")
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
 async function handle_domain(url, context) {
 	const limit = get_limit(url);
-	const domain_list = parse_ip_text(context);
+	const domain_list = parse_hostname_text(context);
 	let 列表 = 生成地址列表(domain_filter(domain_list, limit)).join("\n")
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
@@ -293,11 +293,11 @@ async function handle_fetch(url) {
 	return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
 }
 
-function 更新协议链接(url, ip, port, hash) {
+function 更新协议链接(url, hostname, port, hash) {
 	const url1 = new URL(url);
 	const uuid = url1.username;
 	const security = url1.searchParams.get('security');
-	url1.hostname = ip;
+	url1.hostname = hostname;
 	url1.port = port ? port : security === 'tls' ? 443 : 80;
 	url1.hash = `${uuid.slice(0, 4)}|${hash}`;
 	return url1.href;
@@ -305,7 +305,9 @@ function 更新协议链接(url, ip, port, hash) {
 
 function 调整协议链接(url) {
 	const url1 = new URL(url);
-	const url2 = new URL(url1.searchParams.get('path'), "http://127.0.0.1");
+	const path = url1.searchParams.get('path');
+	if (!path) return url;
+	const url2 = new URL(path, "http://127.0.0.1");
 	const ech = url1.searchParams.get('ech');
 	if (ech) {
 		// path中加ech=1
@@ -319,9 +321,9 @@ function 调整协议链接(url) {
 }
 
 function 更新链接列表(addresses, nodes) {
-	return addresses.map(({ ip, port, hash, remark }, i) => {
+	return addresses.map(({ hostname, port, hash, remark }, i) => {
 		const url = nodes[i % nodes.length];
-		return 更新协议链接(url, ip, port, remark);
+		return 更新协议链接(url, hostname, port, remark);
 	});
 }
 
@@ -329,16 +331,16 @@ function 调整链接列表(links) {
 	return links.map(i => 调整协议链接(i));
 }
 
-function ip_filter(region_ip, region_limit) {
+function hostname_filter(region_hostname, region_limit) {
 	const regionMap = new Map();
 	for (const [region, limit] of region_limit) {
-		const region_ip_list = region_ip.get(region);
-		if (!region_ip_list) {
+		const region_hostname_list = region_hostname.get(region);
+		if (!region_hostname_list) {
 			regionMap.set(region, []);
 		} else {
 			const name = REGION_MAP[region] || '未知';
 			// 随机一下，以免每次选出结果一
-			const shuffled = Array.from(region_ip_list).sort(() => Math.random() - 0.5);
+			const shuffled = Array.from(region_hostname_list).sort(() => Math.random() - 0.5);
 			const limitedList = shuffled.slice(0, limit).map((item, index) => ({ ...item, remark: `${item.hash} ${name} ${index + 1}` }));
 			regionMap.set(region, limitedList);
 		}
@@ -356,9 +358,9 @@ async function handle_ip_v2ray(url, context, base64) {
 	const cf_nodes = parse_nodes(CF_NODES);
 	const not_cf_nodes = parse_nodes(NOT_CF_NODES);
 	const region_limit = get_region_limit(url);
-	const region_ip = group_ip_list_by_hash(parse_ip_text(context));
-	const new_region_ip = ip_filter(region_ip, region_limit);
-	let 列表 = 更新链接列表([...new_region_ip.values()].flat(), cf_nodes);
+	let region_hostname = group_hostname_by_hash(parse_hostname_text(context));
+	region_hostname = hostname_filter(region_hostname, region_limit);
+	let 列表 = 更新链接列表([...region_hostname.values()].flat(), cf_nodes);
 	列表 = 调整链接列表(not_cf_nodes.concat(列表)).join("\n")
 	if (base64) 列表 = btoa(列表);
 	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
@@ -368,7 +370,7 @@ async function handle_domain_v2ray(url, context, base64) {
 	const cf_nodes = parse_nodes(CF_NODES);
 	const not_cf_nodes = parse_nodes(NOT_CF_NODES);
 	const limit = get_limit(url);
-	const domain_list = parse_ip_text(context);
+	const domain_list = parse_hostname_text(context);
 	let 列表 = 更新链接列表(domain_filter(domain_list, limit), cf_nodes);
 	列表 = 调整链接列表(not_cf_nodes.concat(列表)).join("\n")
 	if (base64) 列表 = btoa(列表);
