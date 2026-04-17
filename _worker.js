@@ -1,110 +1,4 @@
-﻿
-// TODO 一定要修改，可以一起使用，如/domain/v2ray?token=NOT_CF_NODES&token=CF_NODES
-let TOKENS = `
-# 第1条，授权返回 CF_NODES 优选节点的信息
-CF节点
-
-# 第2条，授权返回 NOT_CF_NODES 固定节点的信息 
-非CF
-
-`;
-
-// 注意：为防代码被拦截，vless/trojan/ss被替换了
-
-// CF节点信息，只替换hostname和port就可以实现优选
-let CF_NODES = `
-
-# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-${atob('VHJvSmFu').toLowerCase()}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
-# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-${atob('Vmxlc1M=').toLowerCase()}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
-# https://sub.xxcode.cc.cd/sub/CMQn3Tzisf?token=cpimNgEa
-${atob('dm1lc3M=').toLowerCase()}://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
-
-`;
-
-// 自行搭建的非CF节点，无法使用优选IP域名，但可以统一放在这一起订阅管理
-let NOT_CF_NODES = `
-# 用#号忽略当前行
-${atob('dmxlc3M=').toLowerCase()}://00000000-0000-4000-8000-000000000000@127.0.01:80?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none#备注
-
-`;
-
-// 订阅转换服务，由于被屏蔽，只能转换，可以通过`domain/sub`看到还原的链接
-let CONVERT_URL = atob("aHR0cHM6Ly9zdWJhcGkuY21saXVzc3NzLm5ldA==");
-// 配置文件模板
-let CONFIG_URL = "https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini"
-
-
-// 优选IP地址
-let BEST_IP_URL = 'https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt';
-
-// TODO 可以在此自定义域名，其实也可以自定义IP
-let BEST_DOMAINS = `cloudflare-dns.com#Cloudflare DNS
-www.temu.com#Temu
-docs.cloudflare.com#Cloudflare Docs
-itarmy.com.ua#ItArmy乌克兰资讯科技军
-www.shopify.com#Shopify
-www.fbi.gov#FBI
-www.wto.org#WTO
-www.epicgames.com#Epic Games
-support.cloudflare.com#Cloudflare Support
-blog.cloudflare.com#Cloudflare Blog
-ns.cloudflare.com#Cloudflare NS
-developers.cloudflare.com#Cloudflare Developers
-openai.com#OpenAI
-www.whatismyip.net#WhatismyIP
-www.npmjs.com#npmjs
-cdnjs.com#cdnjs
-www.udemy.com#Udemy
-www.csgo.net#csgo
-www.visa.cn#Visa中国
-mfa.gov.ua#乌克兰外交部
-store.ubi.com#Ubisoft
-staticdelivery.nexusmods.com#NexusMods
-icook.tw#台湾爱料理
-icook.hk#香港爱料理
-ip.sb#IP.sb
-time.is#Time.is
-www.speedtest.net#Speedtest
-www.whoer.net#WHOER
-japan.com#日本Japan
-russia.com#俄罗斯Russia
-singapore.com#新加坡Singapore
-malaysia.com#马来西亚Malaysia
-ln.edu.hk#香港岭南大学
-biomaterials.ust.hk#香港科技大学
-yingwa.edu.hk#香港英华
-hongkongairport.com#香港机场
-indonesia.com#印尼Indonesia
-www.hugedomains.com#hugedomains
-www.digitalocean.com#digitalocean
-cdn.onesignal.com#onesignal
-www.glassdoor.com#glassdoor
-palera.in#palera
-itunes.apple.com#iTunes
-www.drmartens.co.kr#韩国马丁靴
-skk.moe#日本前端资源
-cloudflare-ech.com#CF基础设施(ECH)
-
-saas.sin.fan#SIN域名MIYU维护
-cf.tencentapp.cn#腾讯APP个人
-cloudflare-dl.byoip.top#NB优选服务
-cf.877774.xyz#秋名山877774
-bestcf.030101.xyz#Mingyu维护030101
-cf.cloudflare.182682.xyz#WeTest.Vip
-
-cf.090227.xyz#三网090227
-cm.090227.xyz#移动090227
-cu.090227.xyz#联通090227
-ct.090227.xyz#电信090227
-cloudflare.seeck.cn#三网seeck
-ctcc.cloudflare.seeck.cn#电信seeck
-cmcc.cloudflare.seeck.cn#移动seeck
-cucc.cloudflare.seeck.cn#联通seeck
-`;
-
-// ECH配置
+﻿// ECH配置
 const ECH_SNI = "cloudflare-ech.com";
 
 /**
@@ -240,15 +134,17 @@ function cleanupSomeExpired(cache, ttl, now, maxCount) {
 }
 
 async function fetch_url(url) {
+	if (!url) return '';
 	console.log('fetching', url);
 	const newData = await fetch(url).then(res => res.text());
 	return newData;
 }
-const cached_fetch_300 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 300 });
+const cached_fetch_30 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 30 });
 const cached_fetch_15 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 15 });
 
 function parse_hostname_item(line) {
-	const url = new URL("https://" + line);
+	// 支持从vless提取hostname, 也支持从`127.0.0.1:443#备注`提取hostname
+	const url = new URL(line.includes('://') ? line : "https://" + line);
 	const hostname = url.hostname;
 	const hash = decodeURIComponent(url.hash ? url.hash.substring(1) : ''); // 去掉#
 	const port = url.port; // 没写就为空
@@ -269,8 +165,8 @@ function parse_hostname_text(content) {
 		.map(line => parse_hostname_item(line));
 }
 
-function group_hostname_by_hash(ipList) {
-	const grouped = Object.groupBy(ipList, item => item.hash);
+function group_hostnames_by_hash(hostnames) {
+	const grouped = Object.groupBy(hostnames, item => item.hash);
 	// 返回的是对象，键是hash值，值是数组
 	// 如果需要Map格式，可以转换
 	return new Map(Object.entries(grouped));
@@ -282,21 +178,6 @@ function 生成地址列表(addresses) {
 	);
 }
 
-async function handle_ip(url, context) {
-	const region_limit = get_region_limit(url);
-	let region_hostname = group_hostname_by_hash(parse_hostname_text(context));
-	region_hostname = hostname_filter(region_hostname, region_limit);
-	let 列表 = 生成地址列表([...region_hostname.values()].flat()).join("\n")
-	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
-}
-
-async function handle_domain(url, context) {
-	const limit = get_limit(url);
-	const domain_list = parse_hostname_text(context);
-	let 列表 = 生成地址列表(domain_filter(domain_list, limit)).join("\n")
-	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
-}
-
 async function handle_fetch(url) {
 	const targetUrl = url.searchParams.get('url');
 	const userAgent = url.searchParams.get('ua') || 'clash'; // 默认UA为clash
@@ -306,6 +187,7 @@ async function handle_fetch(url) {
 	const resp = await fetch(decodeURIComponent(targetUrl), { headers: { 'User-Agent': userAgent } });
 	return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
 }
+
 
 // 解码：Latin-1字符串 -> UTF-8字节 -> 正常字符串
 const decodeGarbledText = s => new TextDecoder().decode(Uint8Array.from(s, c => c.charCodeAt()));
@@ -356,6 +238,7 @@ function 调整协议链接(url) {
 
 function 更新链接列表(addresses, nodes) {
 	if (nodes.length === 0) return [];
+	if (addresses.length === 0) return nodes;
 	return addresses.map(({ hostname, port, hash, remark }, i) => {
 		const url = nodes[i % nodes.length];
 		return 更新协议链接(url, hostname, port, remark);
@@ -366,102 +249,52 @@ function 调整链接列表(links) {
 	return links.map(i => 调整协议链接(i));
 }
 
-function hostname_filter(region_hostname, region_limit) {
+function hostnames_limit_region(region_hostname, limit_region) {
 	const regionMap = new Map();
-	for (const [region, limit] of region_limit) {
-		const region_hostname_list = region_hostname.get(region);
-		if (!region_hostname_list) {
+	for (const [limit, region] of limit_region) {
+		const hostnames_part = region_hostname.get(region);
+		if (!hostnames_part) {
 			regionMap.set(region, []);
 		} else {
-			const name = REGION_MAP[region] || '未知';
+			const name = REGION_MAP[region] || '未知地区';
 			// 随机一下，以免每次选出结果一
-			const shuffled = Array.from(region_hostname_list).sort(() => Math.random() - 0.5);
+			const shuffled = Array.from(hostnames_part).sort(() => Math.random() - 0.5);
 			const limitedList = shuffled.slice(0, limit).map((item, index) => ({ ...item, remark: `${item.hash} ${name} ${index + 1}` }));
 			regionMap.set(region, limitedList);
 		}
 	}
-	return regionMap;
+	return [...regionMap.values()].flat();
 }
 
-function domain_filter(domain_list, limit) {
-	const shuffled = Array.from(domain_list).sort(() => Math.random() - 0.5);
-	const limitedList = shuffled.slice(0, limit).map((item, index) => ({ ...item, remark: `${item.hash}` }));
-	return limitedList;
+function hostnames_limit(hostnames, limit) {
+	const shuffled = Array.from(hostnames).sort(() => Math.random() - 0.5);
+	return shuffled.slice(0, limit).map((item, index) => ({ ...item, remark: `${item.hash} ${index + 1}` }));
 }
 
-async function handle_ip_v2ray(url, context, base64) {
-	const _TOKENS = parse_new_line(TOKENS);
-	const tokens = get_tokens(url);
-	let 列表 = [];
-	if (tokens.includes(_TOKENS[1])) {
-		列表 = 列表.concat(parse_new_line(NOT_CF_NODES));
-	}
-	if (tokens.includes(_TOKENS[0])) {
-		const region_hostname = hostname_filter(group_hostname_by_hash(parse_hostname_text(context)), get_region_limit(url));
-		列表 = 列表.concat(更新链接列表([...region_hostname.values()].flat(), parse_new_line(CF_NODES)));
-	}
-	列表 = 调整链接列表(列表).join("\n")
-	if (base64) 列表 = btoa(列表);
-	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
-}
-
-async function handle_domain_v2ray(url, context, base64) {
-	const _TOKENS = parse_new_line(TOKENS);
-	const tokens = get_tokens(url);
-	let 列表 = [];
-	if (tokens.includes(_TOKENS[1])) {
-		列表 = 列表.concat(parse_new_line(NOT_CF_NODES));
-	}
-	if (tokens.includes(_TOKENS[0])) {
-		列表 = 列表.concat(更新链接列表(domain_filter(parse_hostname_text(context), get_limit(url)), parse_new_line(CF_NODES)));
-	}
-	列表 = 调整链接列表(列表).join("\n")
-	if (base64) 列表 = btoa(列表);
-	return new Response(列表, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
-}
-
-function 生成订阅链接(url, target) {
-	const new_url = new URL(`${CONVERT_URL}/sub?target=${target}&insert=false&emoji=false&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true`);
+function 生成订阅链接(url, target, convert_url, config_url) {
+	const new_url = new URL(convert_url + "/sub?target=" + target + "&insert=false&emoji=false&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true");
 	new_url.searchParams.set('url', url);
-	new_url.searchParams.set('config', CONFIG_URL);
+	new_url.searchParams.set('config', config_url);
 	return new_url;
 }
-async function handle_sub(url) {
-	const sub_clash = new URL(url);
-	sub_clash.pathname = sub_clash.pathname.replace('/sub', '/base64');
-	const sub_singbox = new URL(url);
-	sub_singbox.pathname = sub_singbox.pathname.replace('/sub', '/base64');
 
-	const url_clash = new URL(url);
-	url_clash.pathname = url_clash.pathname.replace('/sub', '/clash');
-	const url_singbox = new URL(url);
-	url_singbox.pathname = url_singbox.pathname.replace('/sub', '/singbox');
+function 生成服务链接(url, nodes, hostnames, region, limit, format) {
+	const new_url = new URL(url);
+	new_url.pathname = '/' + format;
+	if (nodes) new_url.searchParams.set('nodes', nodes);
+	if (hostnames) {
+		new_url.searchParams.set('nodes', hostnames);
+		if (region) new_url.searchParams.set('region', region);
+		if (limit) new_url.searchParams.set('limit', limit);
+	}
+	return new_url;
+}
 
-	const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>订阅链接</title></head>
-<body>
-    <h3>订阅链接</h3>
-    <p><strong>警告：</strong>通过以下链接订阅，ech 信息会丢失。部分节点开启 ech 反而无法上网</p>
-    <div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
-        ${生成订阅链接(sub_clash, 'clash')}
-    </div>
-	<div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
-        ${生成订阅链接(sub_singbox, 'singbox')}
-    </div>
-	<p><strong>提示：</strong>通过以下链接订阅，ech 信息会根据配置参数尝试修复</p>
-	<div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
-        ${url_clash}
-    </div>
-	<div style="background:#f5f5f5; padding:10px; word-break:break-all; border:1px solid #ddd; font-family:monospace;">
-        ${url_singbox}
-    </div>
-    <p>请复制上面的链接到您的客户端中使用</p>
-</body>
-</html>
-    `;
-	return new Response(htmlContent, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+function 生成补丁链接(url1, format, url2) {
+	const new_url = new URL(url1);
+	new_url.pathname = '/' + format;
+	new_url.searchParams.set('url', url2);
+	return new_url;
 }
 
 function add_ech_to_clash(yamlString) {
@@ -490,46 +323,33 @@ function add_ech_to_singbox(jsonString) {
 	return JSON.stringify(config, null, 2);
 }
 async function handle_clash(url) {
-	let url_sub = new URL(url);
-	url_sub.pathname = url_sub.pathname.replace('/clash', '/base64');
-	url_sub = 生成订阅链接(url_sub, 'clash');
+	const _url = url.searchParams.get('url');
 	// 订阅转换ech丢失，需要后期添加
-	const content = await cached_fetch_15(url_sub.href);
+	const content = await cached_fetch_15(_url);
 	return new Response(add_ech_to_clash(content), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
 async function handle_singbox(url) {
-	let url_sub = new URL(url);
-	url_sub.pathname = url_sub.pathname.replace('/singbox', '/base64');
-	url_sub = 生成订阅链接(url_sub, 'singbox');
+	const _url = url.searchParams.get('url');
 	// 订阅转换ech丢失，需要后期添加
-	const content = await cached_fetch_15(url_sub.href);
+	const content = await cached_fetch_15(_url);
 	return new Response(add_ech_to_singbox(content), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-function stringToBoolean(str) {
-	if (!str) return false;
-	const s = str.toLowerCase().trim();
-	return s === "true" || s === "1" || s === "yes" || s === "on";
-}
 function zip(...arrays) {
 	const length = Math.min(...arrays.map(arr => arr.length));
 	return Array.from({ length }, (_, i) => arrays.map(arr => arr[i]));
 }
-function get_region_limit(url, max_limit = 30) {
+function get_limit_region(url, max_limit = 30) {
 	// 限制地区和数量的参数
-	const region = (url.searchParams.get('region') || "HK-US").split('-');
-	const limit = (url.searchParams.get('limit') || "5-5").split('-');
-	const region_limit = zip(region, limit);
-	return region_limit.map(([region, limit]) => [region, Math.min(parseInt(limit, 10), max_limit)]);
+	const limit = (url.searchParams.get('limit') || "1").split('-');
+	const region = (url.searchParams.get('region') || "").split('-');
+	return zip(limit, region).map(([a, b]) => [Math.min(parseInt(a, 10), max_limit), b]);
 }
 
 function get_limit(url, max_limit = 60) {
-	const limit = url.searchParams.get('limit') || "20";
-	return Math.min(parseInt(limit, 10), max_limit);
-}
-function get_tokens(url) {
-	return url.searchParams.getAll('token') || [];
+	const limit = (url.searchParams.get('limit') || "1").split('-');
+	return limit.map(a => Math.min(parseInt(a, 10), max_limit))[0];
 }
 
 function parse_new_line(inputText) {
@@ -539,42 +359,79 @@ function parse_new_line(inputText) {
 		.filter(line => line && !line.startsWith('#'));
 }
 
+async function handle_extract(url) {
+	let hostnames = await fetch_hostnames(url.searchParams.get('hostname'));
+	console.log(hostnames);
+	if (url.searchParams.get('region')) {
+		hostnames = hostnames_limit_region(group_hostnames_by_hash(hostnames), get_limit_region(url, 30));
+		// 限制最多60条
+		hostnames = hostnames_limit(hostnames, 80);
+	}
+	else {
+		// 限制最多60条
+		hostnames = hostnames_limit(hostnames, get_limit(url, 80))
+	}
+	return new Response(JSON.stringify(hostnames, null, 0), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+}
 
+async function handle_v2ray(url, base64) {
+	let hostnames = await fetch_hostnames(url.searchParams.get('hostnames'));
+	console.log(hostnames);
+	if (url.searchParams.get('region')) {
+		hostnames = hostnames_limit_region(group_hostnames_by_hash(hostnames), get_limit_region(url, 30));
+		// 限制最多60条
+		hostnames = hostnames_limit(hostnames, 80);
+	}
+	else {
+		// 限制最多60条
+		hostnames = hostnames_limit(hostnames, get_limit(url, 80))
+	}
+
+	const content = await await cached_fetch_30(url.searchParams.get('nodes'));
+	const txt = content.includes('.') ? content : atob(content);
+	let nodes = parse_new_line(txt);
+	console.log(nodes);
+	nodes = 更新链接列表(hostnames, nodes)
+	nodes = 调整链接列表(nodes).join("\n")
+	if (base64) nodes = btoa(nodes);
+	return new Response(nodes, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+}
+
+async function fetch_hostnames(target_url) {
+	if (!target_url) return [];
+	if (target_url.startsWith("sub://")) {
+		target_url = `${target_url.replace("sub://", "https://")}/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000`;
+	}
+	const content = await cached_fetch_30(target_url);
+	const txt = content.includes('.') ? content : atob(content);
+	return parse_hostname_text(txt);
+}
+
+async function handle_home(url) {
+	const home_url = "https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/home.html";
+	const text = await await cached_fetch_30(home_url);
+	return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+}
 
 export default {
 	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
 
-		TOKENS = env.TOKENS || TOKENS;
-		CF_NODES = env.CF_NODES || CF_NODES;
-		NOT_CF_NODES = env.NOT_CF_NODES || NOT_CF_NODES;
-		CONVERT_URL = env.CONVERT_URL || CONVERT_URL;
-		CONFIG_URL = env.CONVERT_URL || CONFIG_URL;
-		BEST_IP_URL = env.BEST_DOMAINS || BEST_IP_URL;
-		BEST_DOMAINS = env.BEST_DOMAINS || BEST_DOMAINS;
-
 		switch (url.pathname) {
 			case '/fetch':
 				return await handle_fetch(url);
-			case '/ip':
-				return await handle_ip(url, await cached_fetch_300(BEST_IP_URL));
-			case '/domain':
-				return await handle_domain(url, BEST_DOMAINS);
-			case '/ip/v2ray':
-			case '/ip/base64':
-				return await handle_ip_v2ray(url, await cached_fetch_300(BEST_IP_URL), url.pathname.endsWith('/base64'));
-			case '/domain/v2ray':
-			case '/domain/base64':
-				return await handle_domain_v2ray(url, BEST_DOMAINS, url.pathname.endsWith('/base64'));
-			case '/ip/sub':
-			case '/domain/sub':
-				return await handle_sub(url);
-			case '/ip/clash':
-			case '/domain/clash':
+			case '/extract':
+				return await handle_extract(url);
+			case '/v2ray':
+				return await handle_v2ray(url, false);
+			case '/base64':
+				return await handle_v2ray(url, true);
+			case '/clash':
 				return await handle_clash(url);
-			case '/ip/singbox':
-			case '/domain/singbox':
+			case '/singbox':
 				return await handle_singbox(url);
+			case '/':
+				return await handle_home(url);
 			default:
 				return new Response('Hello World!');
 		}
