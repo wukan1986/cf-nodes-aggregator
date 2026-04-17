@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CF NODES汇集面板</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 顶部提示 */
+        .top-alert {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-alert:before {
+            content: "⚠";
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        h3 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .form-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .input-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .input-label {
+            width: 200px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-right: 15px;
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+
+        .input-field-group {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-field-container {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .input-field input[type="text"],
+        .input-field input[type="url"],
+        .input-field select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-field input[type="text"]:focus,
+        .input-field input[type="url"]:focus,
+        .input-field select:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            align-items: center;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            white-space: nowrap;
+            height: 40px;
+        }
+
+        /* 复制按钮样式 - 绿色 */
+        .copy-btn {
+            background-color: #2ecc71;
+            border-radius: 0;
+        }
+
+        .copy-btn:hover {
+            background-color: #27ae60;
+        }
+
+        /* 访问检测按钮样式 - 蓝色 */
+        .access-btn {
+            background-color: #3498db;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .access-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .hint {
+            width: 100%;
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+        }
+
+        /* 优化列表样式，减少空白 */
+        .hint ol {
+            margin: 0;
+            padding: 0 0 0 12px;
+        }
+
+        .hint li {
+            margin: 2px 0;
+            line-height: 1.4;
+        }
+
+        /* 重要提示样式 */
+        .important-hint {
+            border-left-color: #e74c3c;
+            background-color: #fff5f5;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-row label {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .output-row {
+            margin-top: 30px;
+        }
+
+        .output-row .input-label {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .output-row .input-field-group {
+            width: 100%;
+        }
+
+        .output-controls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .output-controls button {
+            border-radius: 4px;
+            border-left: none;
+            margin-left: 10px;
+        }
+
+        .output-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            background-color: #f8f9fa;
+            resize: vertical;
+        }
+
+        /* 复制成功提示 */
+        .copy-success {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2ecc71;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .copy-success.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 优化长文本显示 */
+        input[type="text"],
+        input[type="url"],
+        select {
+            width: 100%;
+            min-width: 0;
+        }
+
+        /* 自动换行和溢出处理 */
+        input[type="text"],
+        input[type="url"] {
+            white-space: nowrap;
+            overflow-x: auto;
+            text-overflow: ellipsis;
+        }
+
+        input[type="text"]:focus,
+        input[type="url"]:focus {
+            white-space: normal;
+            overflow-x: visible;
+        }
+
+        /* 针对特定长输入框优化 */
+        #nodes,
+        #hostnames,
+        #origin,
+        #convert,
+        #config {
+            min-width: 600px;
+        }
+
+        /* 选择框不需要与按钮相连 */
+        #format {
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        @media (max-width: 1200px) {
+
+            #nodes,
+            #hostnames,
+            #origin,
+            #convert,
+            #config {
+                min-width: 500px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .top-alert {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 12px 15px;
+            }
+
+            .top-alert:before {
+                margin-bottom: 8px;
+            }
+
+            .input-row {
+                flex-direction: column;
+            }
+
+            .input-label {
+                width: 100%;
+                margin-bottom: 8px;
+                padding-top: 0;
+            }
+
+            .input-field-group {
+                width: 100%;
+            }
+
+            #nodes,
+            #hostnames,
+            #origin,
+            #convert,
+            #config {
+                min-width: 100%;
+            }
+
+            .button-group {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .input-field-container {
+                flex-wrap: wrap;
+            }
+
+            .output-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .output-controls button {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 8px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .form-container {
+                padding: 15px;
+            }
+
+            #nodes,
+            #hostnames,
+            #origin,
+            #convert,
+            #config {
+                min-width: 100%;
+            }
+
+            .input-field-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-field input[type="text"],
+            .input-field input[type="url"],
+            .input-field select {
+                border-radius: 4px 4px 0 0;
+            }
+
+            button {
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-top: 1px solid #2980b9;
+                margin-top: 0;
+            }
+
+            .copy-btn {
+                border-radius: 0;
+            }
+
+            .access-btn {
+                border-radius: 0 0 4px 4px;
+            }
+
+            .copy-success {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 复制成功提示 -->
+    <div id="copySuccess" class="copy-success">内容已复制到剪贴板！</div>
+
+    <!-- 顶部提示 -->
+    <div class="top-alert">
+        重要提示：所有🔗URL链接都必须确保公网能够访问，否则订阅将无法正常工作！
+    </div>
+
+    <h3>CF NODES汇集面板</h3>
+
+    <div class="form-container">
+        <!-- 节点来源 -->
+        <div class="input-row">
+            <div class="input-label">节点来源(nodes):🔗</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input list="nodes_list" id="nodes" />
+                        <datalist id="nodes_list"></datalist>
+                    </div>
+                    <div class="button-group">
+                        <button class="copy-btn" onclick="copyInputValue('nodes')">复制</button>
+                        <button class="access-btn" onclick="openInputValue('nodes')">公网访问检测</button>
+                    </div>
+                </div>
+                <div class="hint important-hint">
+                    <ol>
+                        <li>⚠ 必填</li>
+                        <li>目标链接的内容将先尝试Base64解码</li>
+                        <li>必须是vless/trojan/ss节点的列表。优选时将扩增节点数量，替换节点中的hostname:port#hash</li>
+                        <li>各机场的v2ray订阅链接本质也是节点链接</li>
+                        <li>节点文件可以托管到在线平台。如：https://gist.githubusercontent.com</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 优选IP/优选域名 -->
+        <div class="input-row">
+            <div class="input-label">优选IP/优选域名(hostnames):🔗</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input list="hostnames_list" id="hostnames" />
+                        <datalist id="hostnames_list"></datalist>
+                    </div>
+                    <div class="button-group">
+                        <button class="copy-btn" onclick="copyInputValue('hostnames')">复制</button>
+                        <button class="access-btn" onclick="openInputValue('hostnames')">公网访问检测</button>
+                    </div>
+                </div>
+                <div class="hint important-hint">
+                    <ol>
+                        <li>⚠ 选填。留空则"nodes"将原样返回，不扩展优选节点</li>
+                        <li>目标链接的内容将先尝试Base64解码</li>
+                        <li>如果是vless/trojan/ss节点的列表，将从中提取节点中的hostname:port#hash供优选使用</li>
+                        <li>如果是域名列表，将从中提取domain:port#hash供优选使用。无法限定IP地区，但节点稳定性高</li>
+                        <li>如果是IP列表，将从中提取ip:port#hash供优选使用。如果hash提供了地区，就可以选，但节点稳定性低</li>
+                        <li>优选订阅服务源码：https://github.com/cmliu/EdgeOne-Pages-BestIP2SUB</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分区过滤 -->
+        <div class="input-row">
+            <div class="input-label">分区过滤(region):</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input id="region" value="" />
+                    </div>
+                </div>
+                <div class="hint important-hint">
+                    <ol>
+                        <li>⚠ 选填。非空表示hostnames按先按hash分组再过滤需要的组；留空表示hostnames保持原样</li>
+                        <li>⚠ "优选域名列表"和"部分优选IP列表"，没有提供"地区hash"的，一定要留空，否则过滤后hostnames为空，会导致nodes不优选直接返回</li>
+                        <li>多区域使用"-"分隔，例如："HK-JP-US"</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分区条数 -->
+        <div class="input-row">
+            <div class="input-label">分区条数(limit):</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input id="limit" value="10" />
+                    </div>
+                </div>
+                <div class="hint">
+                    <ol>
+                        <li>多区域使用"-"分隔，例如："10-6-8"。</li>
+                        <li>"region=HK-JP-US&limit=10-6-8"表示从hostnames中随机选出HK10条、JP6条、US8条</li>
+                        <li>"limit=20"表示从hostnames中随机选出20条</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 转换服务 -->
+        <div class="input-row">
+            <div class="input-label">转换服务(convert)：🔗</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input list="convert_list" id="convert" value="https://subapi.cmliussss.net" />
+                        <datalist id="convert_list">
+                            <option value="https://subapi.cmliussss.net">CM提供</option>
+                            <option value="https://url.v1.mk">肥羊提供</option>
+                        </datalist>
+                    </div>
+                    <div class="button-group">
+                        <button class="copy-btn" onclick="copyInputValue('convert')">复制</button>
+                        <button class="access-btn" onclick="openInputValue('convert')">公网访问检测</button>
+                    </div>
+                </div>
+                <div class="hint important-hint">
+                    <ol>
+                        <li>clash/singbox格式需要转换服务</li>
+                        <li>订阅转换服务源码：https://github.com/cmliu/sub-web-modify</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置模板 -->
+        <div class="input-row">
+            <div class="input-label">配置模板(config)：🔗</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input list="config_list" id="config" />
+                        <datalist id="config_list"></datalist>
+                    </div>
+                    <div class="button-group">
+                        <button class="copy-btn" onclick="copyInputValue('config')">复制</button>
+                        <button class="access-btn" onclick="openInputValue('config')">公网访问检测</button>
+                    </div>
+                </div>
+                <div class="hint">
+                    <ol>
+                        <li>不同的配置模板，生成的订阅文件不同</li>
+                        <li>订阅转换服务源码：https://github.com/cmliu/sub-web-modify</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 当前服务端 -->
+        <div class="input-row">
+            <div class="input-label">当前服务端(origin)：🔗</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input id="origin" />
+                    </div>
+                    <div class="button-group">
+                        <button class="copy-btn" onclick="copyInputValue('origin')">复制</button>
+                        <button class="access-btn" onclick="openInputValue('origin')">公网访问检测</button>
+                    </div>
+                </div>
+                <div class="hint important-hint">
+                    <ol>
+                        <li>⚠ 必须确保公网可以访问</li>
+                        <li>可以在本地使用本网页，只要使用正确公网地址即可</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 修复ech信息 -->
+        <div class="input-row">
+            <div class="input-label">修复ech信息：</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input type="checkbox" id="ech">
+                    </div>
+                </div>
+                <div class="hint">
+                    <ol>
+                        <li>目前的 转换服务(convert) 都丢失了ech信息，勾选后会由服务器抓取 转换服务 的结果，修补后返回用户</li>
+                        <li>部分节点开启ech反而无法联网</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输出格式 -->
+        <div class="input-row">
+            <div class="input-label">输出格式(format)：</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <select id="format">
+                            <option value="v2ray">v2ray</option>
+                            <option value="base64">base64</option>
+                            <option value="clash">clash</option>
+                            <option value="singbox">singbox</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="hint important-hint">
+                    <ol>
+                        <li>首先，生成v2ray格式链接，打开浏览器或导入v2rayN测试真连接，观察origin/nodes/hostnames/region/limit设置是否正确</li>
+                        <li>再次，生成clash格式链接，打开浏览器或导入clash测试是否超时，观察convert/config设置是否正确</li>
+                        <li>看情况是否要勾选修复ech信息，生成clash链接</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输出框区域 -->
+        <div class="input-row output-row">
+            <div class="input-label">输出框：🔗</div>
+            <div class="input-field-group">
+                <div class="output-controls">
+                    <div class="input-field">
+                        <textarea id="output_box" class="output-textarea" rows="6"
+                            placeholder="编辑任意输入框会自动更新这里的内容"></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button class="copy-btn" onclick="copyInputValue('output_box')">复制</button>
+                        <button class="access-btn" onclick="openInputValue('output_box')">公网访问检测</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openInputValue(inputId) {
+            const inputElement = document.getElementById(inputId);
+            const value = inputElement.value.trim();
+
+            if (!value) {
+                showCopyMessage('请输入要在新窗口打开的内容！', 'error');
+                return;
+            }
+            window.open(value, '_blank')
+        }
+        // 复制输入框内容的函数
+        function copyInputValue(inputId) {
+            const inputElement = document.getElementById(inputId);
+            const value = inputElement.value.trim();
+
+            if (!value) {
+                showCopyMessage('请输入要复制的内容！', 'error');
+                return;
+            }
+
+            // 检查是否支持剪贴板API
+            if (!navigator.clipboard) {
+                // 回退方案
+                inputElement.select();
+                document.execCommand('copy');
+                showCopyMessage('内容已复制到剪贴板！');
+                return;
+            }
+
+            // 使用现代剪贴板API
+            navigator.clipboard.writeText(value)
+                .then(() => {
+                    showCopyMessage('内容已复制到剪贴板！');
+                })
+                .catch(err => {
+                    console.error('复制失败: ', err);
+                    // 回退方案
+                    inputElement.select();
+                    document.execCommand('copy');
+                    showCopyMessage('内容已复制到剪贴板！');
+                });
+        }
+
+        // 显示复制消息
+        function showCopyMessage(message, type = 'success') {
+            const copySuccess = document.getElementById('copySuccess');
+            copySuccess.textContent = message;
+
+            if (type === 'error') {
+                copySuccess.style.backgroundColor = '#e74c3c';
+            } else {
+                copySuccess.style.backgroundColor = '#2ecc71';
+            }
+
+            copySuccess.classList.add('show');
+
+            // 3秒后隐藏提示
+            setTimeout(() => {
+                copySuccess.classList.remove('show');
+            }, 3000);
+        }
+
+        function 生成订阅链接(url, target, convert_url, config_url) {
+            const new_url = new URL(convert_url + "/sub?target=" + target + "&insert=false&emoji=false&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true");
+            new_url.searchParams.set('url', url);
+            new_url.searchParams.set('config', config_url);
+            return new_url;
+        }
+
+        function 生成服务链接(url, nodes, hostnames, region, limit, format) {
+            const new_url = new URL(url);
+            new_url.pathname = '/' + format;
+            if (nodes) new_url.searchParams.set('nodes', nodes);
+            if (hostnames) {
+                new_url.searchParams.set('hostnames', hostnames);
+                if (region) new_url.searchParams.set('region', region);
+                if (limit) new_url.searchParams.set('limit', limit);
+            }
+            return new_url;
+        }
+
+        function 生成补丁链接(url1, format, url2) {
+            const new_url = new URL(url1);
+            new_url.pathname = '/' + format;
+            new_url.searchParams.set('url', url2);
+            return new_url;
+        }
+
+        function addOptionsToDatalist(dataListId, optionsArray) {
+            const dataList = document.getElementById(dataListId);
+
+            optionsArray.forEach(optionObj => {
+                const option = document.createElement('option');
+                option.value = optionObj.value;
+                option.textContent = optionObj.textContent;
+                dataList.appendChild(option);
+            });
+        }
+
+        function updateOutput() {
+            const nodes = document.getElementById('nodes').value.trim();
+            const hostnames = document.getElementById('hostnames').value.trim();
+            const convert = document.getElementById('convert').value.trim();
+            const config = document.getElementById('config').value.trim();
+            const limit = document.getElementById('limit').value.trim();
+            const region = document.getElementById('region').value.trim();
+            const format = document.getElementById('format').value.trim();
+            const origin = document.getElementById('origin').value.trim();
+            const ech = document.getElementById('ech').checked;
+            const outputBox = document.getElementById('output_box');
+
+            let url1, url2, url3;
+            switch (format) {
+                case 'v2ray':
+                case 'base64':
+                    url1 = 生成服务链接(origin, nodes, hostnames, region, limit, format);
+                    outputBox.value = url1.href;
+                    break;
+                case 'clash':
+                case 'singbox':
+                    url1 = 生成服务链接(origin, nodes, hostnames, region, limit, 'base64');
+                    url2 = 生成订阅链接(url1.href, format, convert, config);
+                    if (ech) {
+                        url3 = 生成补丁链接(origin, format, url2);
+                        outputBox.value = url3.href;
+                    } else {
+                        outputBox.value = url2.href;
+                    }
+                    break;
+            }
+        }
+
+        // 复制到剪贴板功能
+        function copyToClipboard() {
+            const outputBox = document.getElementById('output_box');
+            const copySuccess = document.getElementById('copySuccess');
+
+            // 检查是否支持剪贴板API
+            if (!navigator.clipboard) {
+                // 回退方案
+                outputBox.select();
+                document.execCommand('copy');
+                showCopyMessage('内容已复制到剪贴板！');
+                return;
+            }
+
+            // 使用现代剪贴板API
+            navigator.clipboard.writeText(outputBox.value)
+                .then(() => {
+                    showCopyMessage('内容已复制到剪贴板！');
+                })
+                .catch(err => {
+                    console.error('复制失败: ', err);
+                    // 回退方案
+                    outputBox.select();
+                    document.execCommand('copy');
+                    showCopyMessage('内容已复制到剪贴板！');
+                });
+        }
+
+        // 页面加载时设置初始值并立即更新输出
+        document.addEventListener('DOMContentLoaded', function () {
+            let options;
+            options = [
+                { value: 'https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/cf_nodes.txt', textContent: '测试节点链接：托管在GitHubs上' },
+                { value: 'https://sub.cmliussss.net/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '测试节点链接：CM优选订阅' },
+            ];
+            addOptionsToDatalist('nodes_list', options);
+
+            options = [
+                { value: 'https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/best_domains.txt', textContent: '优选域名' },
+                { value: 'https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt', textContent: 'hc990275优选IP(地区分组)' },
+                { value: 'https://zip.cm.edu.kg/all.txt', textContent: '优选IP(按IP增序)' },
+                { value: 'https://sub.cmliussss.net/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: 'CM优选订阅' },
+                { value: 'https://owo.o00o.ooo/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: 'Moist_R 优选' },
+                { value: 'https://cm.soso.edu.kg/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '天诚 优选' },
+                { value: 'https://zrf.zrf.me/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '周润发 优选' },
+                { value: 'https://sub.keaeye.icu/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '文烨 优选' },
+                { value: 'https://sub.mot.cloudns.biz/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: 'Kristi 优选' },
+                { value: 'https://cfsub.cfcdn.xx.kg/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '青云志 优选' },
+                { value: 'https://sub.lzjbaby.com/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '辣子鸡 优选' },
+            ];
+            addOptionsToDatalist('hostnames_list', options);
+
+            options = [
+                { value: 'https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini', textContent: 'ACL4SSR_Online.ini' },
+                { value: 'https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online_Mini_MultiMode_CF.ini', textContent: 'ACL4SSR_Online_Mini_MultiMode_CF.ini' },
+            ];
+            addOptionsToDatalist('config_list', options);
+            document.getElementById('config').value = options[0].value;
+
+            document.getElementById('origin').value = window.location.origin;
+
+            // 为所有输入控件添加事件监听
+            const inputs = document.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('change', updateOutput);
+                input.addEventListener('input', updateOutput);
+            });
+
+            // 为复制按钮添加点击事件
+            document.getElementById('copyButton').addEventListener('click', copyToClipboard);
+
+            // 使用事件委托，支持动态添加的输入框
+            document.addEventListener('focusin', function (e) {
+                const target = e.target;
+                // 检查是否是 input 且有 list 属性
+                if (target.tagName === 'INPUT' && target.hasAttribute('list')) {
+                    if (!target.dataset.lastValue) {
+                        target.dataset.lastValue = target.value;
+                    }
+                    target.dataset.lastValue = target.value;
+                    target.value = '';
+                }
+            });
+
+            document.addEventListener('focusout', function (e) {
+                const target = e.target;
+                if (target.tagName === 'INPUT' && target.hasAttribute('list')) {
+                    if (target.value === '' && target.dataset.lastValue) {
+                        target.value = target.dataset.lastValue;
+                    }
+                }
+            });
+
+            // 初始更新输出
+            updateOutput();
+        });
+    </script>
+</body>
+
+</html>
