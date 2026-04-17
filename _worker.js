@@ -413,6 +413,23 @@ async function handle_home(url) {
 	return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
+async function handle_nodes1(url) {
+	// 防代码屏蔽，全文转base64
+	return new Response(`IyBodHRwczovL3h4eC5ldS5jYy9zdWI/dG9rZW49MWUwMjk0YmJhNWM2OTYwZmU1ZjVlNjAwZjBhODgzYzkKdHJvamFuOi8vMDAwMDAwMDAtMDAwMC00MDAwLTgwMDAtMDAwMDAwMDAwMDAwQG1hbGF5c2lhLmNvbTo0NDM/c2VjdXJpdHk9dGxzJnR5cGU9d3MmaG9zdD14eHguZXUuY2MmZnA9Y2hyb21lJnNuaT14eHguZXUuY2MmZW5jcnlwdGlvbj1ub25lJmVjaD1jbG91ZGZsYXJlLWVjaC5jb20lMkJodHRwcyUzQSUyRiUyRjIyMy41LjUuNSUyRmRucy1xdWVyeSZwYXRoPSUyRiMwMDAwfCVFOSVBOSVBQyVFNiU5RCVBNSVFOCVBNSVCRiVFNCVCQSU5QU1hbGF5c2lhCgojIGh0dHBzOi8veHh4Lnh4eHguZGU1Lm5ldC9zdWI/dG9rZW49MWQ1NjM4Y2VhZTIwNjY3YWI4ZGRlZjc1MmNhZTk5YmYKdmxlc3M6Ly8xMTExMTExMS0xMTExLTQxMTEtODExMS0xMTExMTExMTExMTFAY3QuMDkwMjI3Lnh5ejo4MD9zZWN1cml0eT1ub25lJnR5cGU9d3MmaG9zdD14eHgueHh4eC5kZTUubmV0JmZwPWNocm9tZSZzbmk9eHh4Lnh4eHguZGU1Lm5ldCZlbmNyeXB0aW9uPW5vbmUmcGF0aD0lMkYjMTExMXwlRTclOTQlQjUlRTQlQkYlQTEwOTAyMjcKCiMgaHR0cHM6Ly9zdWIueHhjb2RlLmNjLmNkL3N1Yi9DTVFuM1R6aXNmP3Rva2VuPWNwaW1OZ0VhCnZtZXNzOi8vZXcwS0lDQWlkaUk2SUNJeUlpd05DaUFnSW5Ceklqb2dJblJsYzNRaUxBMEtJQ0FpWVdSa0lqb2dJbk5wYm1kaGNHOXlaUzU0ZUdOdlpHVXVZMk11WTJRaUxBMEtJQ0FpY0c5eWRDSTZJQ0kwTkRNaUxBMEtJQ0FpYVdRaU9pQWlZelV3T1RNNE4yVXROVEl4TlMwME5URXlMVGcyWTJJdFl6YzROVFE0WkRsbVlXUmhJaXdOQ2lBZ0ltRnBaQ0k2SUNJd0lpd05DaUFnSW5OamVTSTZJQ0poZFhSdklpd05DaUFnSW01bGRDSTZJQ0ozY3lJc0RRb2dJQ0owZVhCbElqb2dJbTV2Ym1VaUxBMEtJQ0FpYUc5emRDSTZJQ0p6YVc1bllYQnZjbVV1ZUhoamIyUmxMbU5qTG1Oa0lpd05DaUFnSW5CaGRHZ2lPaUFpTDJRME0yaHNhbWhzTkdWMlkzZ2lMQTBLSUNBaWRHeHpJam9nSW5Sc2N5SXNEUW9nSUNKemJta2lPaUFpYzJsdVoyRndiM0psTG5oNFkyOWtaUzVqWXk1alpDSXNEUW9nSUNKaGJIQnVJam9nSW1neUxHaDBkSEF2TVM0eElpd05DaUFnSW1ad0lqb2dJbU5vY205dFpTSXNEUW9nSUNKcGJuTmxZM1Z5WlNJNklDSXhJZzBLZlE9PQ==`);
+}
+
+async function handle_nodes2(url) {
+	// 防代码屏蔽，关键字转base64
+	return new Response(`
+# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
+${atob('VHJvSmFu').toLowerCase()}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
+# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
+${atob('Vmxlc1M=').toLowerCase()}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
+# https://sub.xxcode.cc.cd/sub/CMQn3Tzisf?token=cpimNgEa
+${atob('dm1lc3M=').toLowerCase()}://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
+`);
+}
+
 export default {
 	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
@@ -432,6 +449,11 @@ export default {
 				return await handle_singbox(url);
 			case '/':
 				return await handle_home(url);
+			// 占用两个路径来演示节点列表托管，可以托管在其他在线平台上
+			case '/_nodes1':
+				return await handle_nodes1(url);
+			case '/_nodes2':
+				return await handle_nodes2(url);
 			default:
 				return new Response('Hello World!');
 		}
