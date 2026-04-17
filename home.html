@@ -810,7 +810,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             let options;
             options = [
-                { value: 'https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/cf_nodes.txt', textContent: '测试节点链接：托管在GitHubs上' },
+                { value: 'https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/cf_nodes.txt', textContent: '测试节点链接：托管在GitHub上' },
                 { value: 'https://sub.cmliussss.net/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '测试节点链接：CM优选订阅' },
             ];
             addOptionsToDatalist('nodes_list', options);
@@ -836,7 +836,6 @@
             ];
             addOptionsToDatalist('config_list', options);
             document.getElementById('config').value = options[0].value;
-
             document.getElementById('origin').value = window.location.origin;
 
             // 为所有输入控件添加事件监听
@@ -845,9 +844,6 @@
                 input.addEventListener('change', updateOutput);
                 input.addEventListener('input', updateOutput);
             });
-
-            // 为复制按钮添加点击事件
-            document.getElementById('copyButton').addEventListener('click', copyToClipboard);
 
             // 使用事件委托，支持动态添加的输入框
             document.addEventListener('focusin', function (e) {
