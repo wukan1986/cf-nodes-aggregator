@@ -1,0 +1,62 @@
+cloudflare-dns.com#Cloudflare DNS
+www.temu.com#Temu
+docs.cloudflare.com#Cloudflare Docs
+itarmy.com.ua#ItArmy乌克兰资讯科技军
+www.shopify.com#Shopify
+www.fbi.gov#FBI
+www.wto.org#WTO
+www.epicgames.com#Epic Games
+support.cloudflare.com#Cloudflare Support
+blog.cloudflare.com#Cloudflare Blog
+ns.cloudflare.com#Cloudflare NS
+developers.cloudflare.com#Cloudflare Developers
+openai.com#OpenAI
+www.whatismyip.net#WhatismyIP
+www.npmjs.com#npmjs
+cdnjs.com#cdnjs
+www.udemy.com#Udemy
+www.csgo.net#csgo
+www.visa.cn#Visa中国
+mfa.gov.ua#乌克兰外交部
+store.ubi.com#Ubisoft
+staticdelivery.nexusmods.com#NexusMods
+icook.tw#台湾爱料理
+icook.hk#香港爱料理
+ip.sb#IP.sb
+time.is#Time.is
+www.speedtest.net#Speedtest
+www.whoer.net#WHOER
+japan.com#日本Japan
+russia.com#俄罗斯Russia
+singapore.com#新加坡Singapore
+malaysia.com#马来西亚Malaysia
+ln.edu.hk#香港岭南大学
+biomaterials.ust.hk#香港科技大学
+yingwa.edu.hk#香港英华
+hongkongairport.com#香港机场
+indonesia.com#印尼Indonesia
+www.hugedomains.com#hugedomains
+www.digitalocean.com#digitalocean
+cdn.onesignal.com#onesignal
+www.glassdoor.com#glassdoor
+palera.in#palera
+itunes.apple.com#iTunes
+www.drmartens.co.kr#韩国马丁靴
+skk.moe#日本前端资源
+cloudflare-ech.com#CF基础设施(ECH)
+
+saas.sin.fan#SIN域名MIYU维护
+cf.tencentapp.cn#腾讯APP个人
+cloudflare-dl.byoip.top#NB优选服务
+cf.877774.xyz#秋名山877774
+bestcf.030101.xyz#Mingyu维护030101
+cf.cloudflare.182682.xyz#WeTest.Vip
+
+cf.090227.xyz#三网090227
+cm.090227.xyz#移动090227
+cu.090227.xyz#联通090227
+ct.090227.xyz#电信090227
+cloudflare.seeck.cn#三网seeck
+ctcc.cloudflare.seeck.cn#电信seeck
+cmcc.cloudflare.seeck.cn#移动seeck
+cucc.cloudflare.seeck.cn#联通seeck

@@ -1,0 +1,8 @@
+# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
+trojan://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
+
+# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
+vless://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
+
+# https://sub.xxcode.cc.cd/sub/CMQn3Tzisf?token=cpimNgEa
+vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
