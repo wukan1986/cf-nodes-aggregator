@@ -845,28 +845,6 @@
                 input.addEventListener('input', updateOutput);
             });
 
-            // 使用事件委托，支持动态添加的输入框
-            document.addEventListener('focusin', function (e) {
-                const target = e.target;
-                // 检查是否是 input 且有 list 属性
-                if (target.tagName === 'INPUT' && target.hasAttribute('list')) {
-                    if (!target.dataset.lastValue) {
-                        target.dataset.lastValue = target.value;
-                    }
-                    target.dataset.lastValue = target.value;
-                    target.value = '';
-                }
-            });
-
-            document.addEventListener('focusout', function (e) {
-                const target = e.target;
-                if (target.tagName === 'INPUT' && target.hasAttribute('list')) {
-                    if (target.value === '' && target.dataset.lastValue) {
-                        target.value = target.dataset.lastValue;
-                    }
-                }
-            });
-
             // 初始更新输出
             updateOutput();
         });
