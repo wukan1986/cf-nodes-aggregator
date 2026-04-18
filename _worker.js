@@ -1,9 +1,9 @@
 ﻿// ECH配置
 const ECH_SNI = "cloudflare-ech.com";
 const HOME_HTML = "https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/home.html";
-const EDIT_HTML = "https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/edit.html";
+const LINK_HTML = "https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/link.html";
 // const HOME_HTML = "http://127.0.0.1:8080/home.html";
-// const EDIT_HTML = "http://127.0.0.1:8080/edit.html";
+// const LINK_HTML = "http://127.0.0.1:8080/link.html";
 /**
  * 地区名称映射 (全球主要 Cloudflare 节点所在国家/地区)
  */
@@ -416,12 +416,12 @@ async function handle_home(url) {
 }
 
 
-async function handle_edit(url) {
-	const text = await await cached_fetch_30(EDIT_HTML);
+async function handle_link(url) {
+	const text = await await cached_fetch_30(LINK_HTML);
 	return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-async function handle_edit_links(url, request, env) {
+async function handle_link_edit(url, request, env) {
 	const auth = await apiKeyAuth(request, env);
 	if (!auth.authenticated) {
 		return new Response('Unauthorized', {
@@ -529,10 +529,10 @@ export default {
 				return await handle_singbox(url);
 			case '/home':
 				return await handle_home(url);
-			case '/edit':
-				return await handle_edit(url);
-			case '/edit/links':
-				return await handle_edit_links(url, request, env);
+			case '/link':
+				return await handle_link(url);
+			case '/link/edit':
+				return await handle_link_edit(url, request, env);
 
 			default:
 				return new Response('Hello World!');

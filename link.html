@@ -176,6 +176,14 @@
         .btn-save-all:hover {
             background: #8e44ad;
         }
+        
+        .btn-add {
+            background: #f39c12;
+        }
+        
+        .btn-add:hover {
+            background: #d68910;
+        }
 
         .link-count {
             font-size: 1.1rem;
@@ -348,6 +356,12 @@
         .btn-cell {
             min-width: 120px;
         }
+        
+        .add-row-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
 
 
         @media (max-width: 768px) {
@@ -435,7 +449,7 @@
                     <i class="fas fa-cloud-download-alt"></i> 加载
                 </button>
                 <div class="link-count">
-                    链接数: <span id="linkCount">9</span>
+                    链接数: <span id="linkCount">3</span>
                 </div>
             </div>
             
@@ -461,10 +475,20 @@
                 <tbody id="tableBody">
                 </tbody>
             </table>
+            
+            <!-- 添加行按钮容器 -->
+            <div class="add-row-container">
+                <button class="btn btn-add" id="addRowBtn">
+                    <i class="fas fa-plus"></i> 添加一行
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
+        // 当前行计数器
+        let currentRowCount = 0;
+        
         // 生成随机唯一链接
         function generateRandomLink() {
             const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -516,7 +540,7 @@
             loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
 
             try {
-                const response = await fetch('/edit/links', {
+                const response = await fetch('/link/edit', {
                     headers: {
                         'Authorization': `Bearer ${apiKey}`
                     }
@@ -539,19 +563,20 @@
 
                 // 如果有远程数据，覆盖当前数据
                 if (remoteData && typeof remoteData === 'object' && Object.keys(remoteData).length > 0) {
-                    const rowIds = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6', 'row7', 'row8', 'row9'];
-                    let updatedCount = 0;
-
+                    // 清空当前表格
+                    document.getElementById('tableBody').innerHTML = '';
+                    currentRowCount = 0;
+                    
+                    // 重新添加行
+                    const rowIds = Object.keys(remoteData);
                     rowIds.forEach(rowId => {
                         if (remoteData[rowId]) {
-                            // 更新行数据
-                            updateRowData(rowId, remoteData[rowId]);
-                            updatedCount++;
+                            addRow(rowId, remoteData[rowId]);
                         }
                     });
 
-                    if (updatedCount > 0) {
-                        showStatus(`成功从服务器加载 ${updatedCount} 条链接数据`, 'success');
+                    if (rowIds.length > 0) {
+                        showStatus(`成功从服务器加载 ${rowIds.length} 条链接数据`, 'success');
                     } else {
                         showStatus('服务器返回了数据，但没有可用的链接数据', 'warning');
                     }
@@ -665,12 +690,12 @@
 
             try {
                 console.log('正在发送数据到服务器:', {
-                    url: '/edit/links',
+                    url: '/link/edit',
                     apiKey: apiKey ? '已设置' : '未设置',
                     dataCount: savedCount
                 });
                 
-                const response = await fetch('/edit/links', {
+                const response = await fetch('/link/edit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -719,7 +744,22 @@
         }
 
         // 添加一行
-        function addRow(rowId, linkData = null) {
+        function addRow(rowId = null, linkData = null) {
+            // 如果没提供rowId，自动生成
+            if (!rowId) {
+                currentRowCount++;
+                rowId = `row${currentRowCount}`;
+            } else {
+                // 从提供的rowId中提取数字
+                const match = rowId.match(/row(\d+)/);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > currentRowCount) {
+                        currentRowCount = num;
+                    }
+                }
+            }
+            
             const link = linkData ? linkData.link : generateRandomLink();
             const note = linkData ? linkData.note : '';
             const type = linkData ? linkData.type : '文本';
@@ -761,26 +801,38 @@
                 e.preventDefault();
                 regenerateLink(linkElement, rowId);
             });
+            
+            // 更新链接计数
+            updateLinkCount();
         }
 
-        // 创建初始9行
+        // 更新链接计数
+        function updateLinkCount() {
+            const rows = document.querySelectorAll('.link-row');
+            document.getElementById('linkCount').textContent = rows.length;
+        }
+
+        // 添加行按钮事件
+        function addRowHandler() {
+            addRow();
+            showStatus('已添加新行', 'info');
+        }
+
+        // 创建初始3行
         function createInitialRows() {
             const tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
+            currentRowCount = 0;
 
-            const rowIds = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6', 'row7', 'row8', 'row9'];
-
-            rowIds.forEach(rowId => {
-                addRow(rowId);
-            });
-
-            // 链接计数显示为9
-            document.getElementById('linkCount').textContent = '9';
+            // 添加3行初始数据
+            for (let i = 1; i <= 3; i++) {
+                addRow(`row${i}`);
+            }
         }
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function () {
-            // 初始创建9行
+            // 初始创建3行
             createInitialRows();
 
             // 加载按钮事件
@@ -788,6 +840,9 @@
             
             // 保存所有按钮事件
             document.getElementById('saveAllBtn').addEventListener('click', saveAllRows);
+            
+            // 添加行按钮事件
+            document.getElementById('addRowBtn').addEventListener('click', addRowHandler);
 
             // API_KEY输入框支持回车加载
             document.getElementById('apiKeyInput').addEventListener('keydown', function (e) {
