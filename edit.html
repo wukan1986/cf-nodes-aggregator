@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>链接管理器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 添加指南样式 */
+        .guide {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #3498db;
+        }
+
+        .guide h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .guide h2 i {
+            color: #3498db;
+        }
+
+        .guide-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .guide-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .guide-item h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .guide-item p {
+            color: #555;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .type-text {
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        .type-forward {
+            color: #9b59b6;
+            font-weight: 600;
+        }
+
+        .type-redirect {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        /* 原有样式保持不变 */
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-save-all {
+            background: #9b59b6;
+        }
+
+        .btn-save-all:hover {
+            background: #8e44ad;
+        }
+
+        .link-count {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .table-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #34495e;
+            color: white;
+        }
+
+        th {
+            padding: 18px 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        th:nth-child(1) {
+            /* 链接列 */
+            width: 25%;
+        }
+
+        th:nth-child(2) {
+            /* 内容列 */
+            width: 65%;
+        }
+
+        th:nth-child(3) {
+            /* 类型列 */
+            width: 10%;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e1e8ed;
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        td {
+            padding: 15px;
+        }
+
+        .link-cell {
+            width: 20%;
+            min-width: 150px;
+        }
+
+        .link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 600;
+            word-break: break-all;
+            display: block;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+            transition: all 0.2s;
+        }
+
+        .link:hover {
+            background-color: #e3f2fd;
+            cursor: pointer;
+        }
+
+        .copied-notice {
+            color: #27ae60;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .textarea-cell {
+            width: 65%;
+            min-width: 350px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .select-cell {
+            width: 15%;
+            min-width: 100px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .btn-cell {
+            min-width: 120px;
+        }
+
+
+        @media (max-width: 768px) {
+
+            th,
+            td {
+                padding: 10px 8px;
+            }
+
+            th:nth-child(1),
+            td:nth-child(1) {
+                /* 链接列 */
+                width: 25%;
+                min-width: 120px;
+            }
+
+            th:nth-child(2),
+            td:nth-child(2) {
+                /* 内容列 */
+                width: 55%;
+                min-width: 200px;
+            }
+
+            th:nth-child(3),
+            td:nth-child(3) {
+                /* 类型列 */
+                width: 20%;
+                min-width: 80px;
+            }
+
+            .guide-content {
+                grid-template-columns: 1fr;
+            }
+
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 添加使用指南 -->
+        <div class="guide">
+            <h2><i class="fas fa-info-circle"></i> 使用指南</h2>
+            <div class="guide-content">
+                <div class="guide-item">
+                    <h3><span class="type-text">文本</span> <i class="fas fa-file-alt"></i></h3>
+                    <p>访问网页直接返回内容中的文本内容。适合用于分享纯文本信息，如说明、代码片段、联系方式等。</p>
+                </div>
+                <div class="guide-item">
+                    <h3><span class="type-forward">转发</span> <i class="fas fa-share"></i></h3>
+                    <p>访问网页时由服务器爬取目标页面内容并转发给用户。适合需要获取远程内容的场景，兼容性好。</p>
+                </div>
+                <div class="guide-item">
+                    <h3><span class="type-redirect">跳转</span> <i class="fas fa-external-link-alt"></i></h3>
+                    <p>访问网页时由浏览器进行302跳转到目标地址。<strong>注意：</strong>部分软件不支持302跳转，此时请选择"转发"类型。</p>
+                </div>
+            </div>
+        </div>
+
+        <h1>链接管理器</h1>
+        <p class="subtitle">管理您的短链接，支持文本、转发和跳转三种类型</p>
+
+        <div class="controls">
+            <div class="link-count">
+                当前链接数: <span id="linkCount">6</span>
+            </div>
+
+            <button class="btn btn-save-all" id="saveAllBtn">
+                <i class="fas fa-save"></i> 保存所有
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table id="linksTable">
+                <thead>
+                    <tr>
+                        <th>链接 (单击复制，双击刷新)</th>
+                        <th>内容</th>
+                        <th>类型</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 生成随机唯一链接
+        function generateRandomLink() {
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let randomString = '';
+            for (let i = 0; i < 10; i++) {
+                randomString += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return window.location.origin + `/s/${randomString}`;
+        }
+
+        // 双击链接重新生成链接
+        function regenerateLink(linkElement, rowId) {
+            const newLink = generateRandomLink();
+            linkElement.textContent = newLink;
+
+            // 显示重新生成的提示
+            const noticeElement = document.getElementById(`notice-${rowId}`);
+            noticeElement.textContent = '链接已重新生成！';
+            noticeElement.style.color = '#3498db';
+            noticeElement.style.display = 'block';
+
+            // 2秒后隐藏提示
+            setTimeout(() => {
+                noticeElement.style.display = 'none';
+            }, 2000);
+        }
+
+        // 复制链接到剪贴板
+        function copyToClipboard(linkElement, noticeElement) {
+            const link = linkElement.textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                // 显示复制成功提示
+                noticeElement.style.display = 'block';
+                noticeElement.textContent = '链接已复制到剪贴板！';
+
+                // 2秒后隐藏提示
+                setTimeout(() => {
+                    noticeElement.style.display = 'none';
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败: ', err);
+                noticeElement.style.display = 'block';
+                noticeElement.textContent = '复制失败，请手动选择并复制';
+                noticeElement.style.color = '#e74c3c';
+
+                setTimeout(() => {
+                    noticeElement.style.display = 'none';
+                    noticeElement.style.color = '#27ae60';
+                }, 2000);
+            });
+        }
+
+        // 从服务器加载数据
+        async function loadDataFromServer() {
+            try {
+                const response = await fetch('/edit/links');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const remoteData = await response.json();
+
+                // 清空表格
+                const tableBody = document.getElementById('tableBody');
+                tableBody.innerHTML = '';
+
+                // 如果有远程数据，使用远程数据
+                if (remoteData && Object.keys(remoteData).length > 0) {
+                    // 创建9行固定链接，使用远程数据
+                    const rowIds = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6',, 'row7', 'row8', 'row9'];
+
+                    rowIds.forEach(rowId => {
+                        if (remoteData[rowId]) {
+                            // 使用远程数据
+                            addRow(rowId, remoteData[rowId]);
+                        } else {
+                            // 如果远程数据中没有对应行，尝试从本地存储加载
+                            const savedData = JSON.parse(localStorage.getItem('linkManagerData') || '{}');
+                            if (savedData[rowId]) {
+                                addRow(rowId, savedData[rowId]);
+                            } else {
+                                // 否则添加一个默认行
+                                addRow(rowId);
+                            }
+                        }
+                    });
+
+                    // 更新链接计数
+                    updateLinkCount();
+                    return true;
+                } else {
+                    // 没有远程数据，从本地存储加载
+                    loadDataFromLocalStorage();
+                    return false;
+                }
+            } catch (error) {
+                console.error('加载远程数据失败:', error);
+                // 如果远程加载失败，从本地存储加载
+                loadDataFromLocalStorage();
+                return false;
+            }
+        }
+
+        // 从本地存储加载数据
+        function loadDataFromLocalStorage() {
+            const savedData = JSON.parse(localStorage.getItem('linkManagerData') || '{}');
+
+            // 清空表格
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            const rowIds = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6', 'row7', 'row8', 'row9'];
+
+            rowIds.forEach(rowId => {
+                if (savedData[rowId]) {
+                    // 使用本地存储的数据
+                    addRow(rowId, savedData[rowId]);
+                } else {
+                    // 否则添加一个默认行
+                    addRow(rowId);
+                }
+            });
+
+            // 更新链接计数
+            updateLinkCount();
+        }
+
+        // 保存所有行数据
+        function saveAllRows() {
+            const rows = document.querySelectorAll('.link-row');
+            if (rows.length === 0) {
+                alert('没有可保存的数据！');
+                return;
+            }
+
+            let savedCount = 0;
+            const allData = {};
+
+            rows.forEach(row => {
+                const rowId = row.id.split('-')[1];
+                const link = document.querySelector(`#link-${rowId}`).textContent;
+                const note = document.querySelector(`#note-${rowId}`).value;
+                const type = document.querySelector(`#type-${rowId}`).value;
+
+                allData[rowId] = { link, note, type };
+                savedCount++;
+            });
+
+            // 保存到localStorage
+            localStorage.setItem('linkManagerData', JSON.stringify(allData));
+
+            // 保存到服务器
+            fetch('/edit/links', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(allData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('服务器保存失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('服务器保存成功:', data);
+                    alert(`已成功保存 ${savedCount} 条链接数据（本地和远程）！`);
+                })
+                .catch(error => {
+                    console.error('服务器保存失败:', error);
+                    alert(`已保存 ${savedCount} 条链接数据到本地存储，但服务器保存失败！是否绑定了KV存储？`);
+                });
+        }
+
+        // 添加一行
+        function addRow(rowId, linkData = null) {
+            const link = linkData ? linkData.link : generateRandomLink();
+            const note = linkData ? linkData.note : '';
+            const type = linkData ? linkData.type : '文本';
+
+            const newRow = document.createElement('tr');
+            newRow.id = `row-${rowId}`;
+            newRow.className = 'link-row';
+
+            newRow.innerHTML = `
+            <td class="link-cell">
+                <a href="#" class="link" id="link-${rowId}">${link}</a>
+                <div class="copied-notice" id="notice-${rowId}"></div>
+            </td>
+            <td class="textarea-cell">
+                <textarea id="note-${rowId}" placeholder="为链接添加内容...">${note}</textarea>
+            </td>
+            <td class="select-cell">
+                <select id="type-${rowId}">
+                    <option value="文本" ${type === '文本' ? 'selected' : ''}>文本</option>
+                    <option value="转发" ${type === '转发' ? 'selected' : ''}>转发</option>
+                    <option value="跳转" ${type === '跳转' ? 'selected' : ''}>跳转</option>
+                </select>
+            </td>
+        `;
+
+            document.getElementById('tableBody').appendChild(newRow);
+
+            // 添加点击复制功能
+            const linkElement = document.getElementById(`link-${rowId}`);
+            const noticeElement = document.getElementById(`notice-${rowId}`);
+
+            linkElement.addEventListener('click', function (e) {
+                e.preventDefault();
+                copyToClipboard(linkElement, noticeElement);
+            });
+
+            // 双击重新生成链接
+            linkElement.addEventListener('dblclick', function (e) {
+                e.preventDefault();
+                regenerateLink(linkElement, rowId);
+            });
+        }
+
+        // 更新链接计数
+        function updateLinkCount() {
+            const rows = document.querySelectorAll('.link-row');
+            document.getElementById('linkCount').textContent = rows.length;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async function () {
+            // 从服务器加载数据
+            const loadedFromServer = await loadDataFromServer();
+
+            if (!loadedFromServer) {
+                console.log('从服务器加载失败，已从本地存储加载数据。是否绑定了KV存储？');
+            }
+
+            // 添加"保存所有"按钮事件
+            document.getElementById('saveAllBtn').addEventListener('click', saveAllRows);
+
+            // 添加键盘快捷键支持
+            document.addEventListener('keydown', function (e) {
+                // Ctrl+Enter 保存所有
+                if (e.ctrlKey && e.key === 'Enter') {
+                    saveAllRows();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
