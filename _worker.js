@@ -422,12 +422,20 @@ async function handle_edit(url) {
 }
 
 async function handle_edit_links(url, request, env) {
+	const auth = await apiKeyAuth(request, env);
+	if (!auth.authenticated) {
+		return new Response('Unauthorized', {
+			status: 401,
+			headers: { 'WWW-Authenticate': 'Bearer' }
+		});
+	}
+
 	const STORAGE = env.KV;
 	if (!STORAGE) return new Response('No KV storage available', { status: 500 });
 
 	const method = request.method;
 	if (method === 'GET') {
-		const data = await STORAGE.get('edit', { type: 'json' });
+		const data = await STORAGE.get('edit', { type: 'json' })||[];
 		const txt = JSON.stringify(data)
 		return new Response(txt, { headers: { 'Content-Type': 'text/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
@@ -442,7 +450,6 @@ async function handle_edit_links(url, request, env) {
 async function handle_s(url, env) {
 	const STORAGE = env.KV;
 	if (!STORAGE) return new Response('No KV storage available', { status: 500 });
-
 	const data = await STORAGE.get('edit', { type: 'json' });
 
 	if (!data) {
@@ -481,6 +488,22 @@ async function handle_s(url, env) {
 
 	// 没有找到匹配的链接
 	return new Response('Link not found', { status: 404 });
+}
+
+async function apiKeyAuth(request, env) {
+	const authHeader = request.headers.get('Authorization');
+
+	if (!authHeader || !authHeader.startsWith('Bearer ')) {
+		return { authenticated: false };
+	}
+
+	const apiKey = authHeader.substring(7);
+	const validKey = env.API_KEY; // 在wrangler.toml或环境变量中设置
+
+	return {
+		authenticated: apiKey === validKey,
+		apiKey: apiKey
+	};
 }
 
 export default {

@@ -113,6 +113,33 @@
             gap: 15px;
         }
 
+        .controls-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .controls-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .api-input {
+            padding: 10px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 250px;
+            transition: border-color 0.3s;
+        }
+
+        .api-input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
         .btn {
             background: #3498db;
             color: white;
@@ -134,6 +161,14 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
+        .btn-load {
+            background: #2ecc71;
+        }
+
+        .btn-load:hover {
+            background: #27ae60;
+        }
+
         .btn-save-all {
             background: #9b59b6;
         }
@@ -149,6 +184,45 @@
             padding: 10px 20px;
             border-radius: 8px;
             font-weight: 600;
+        }
+
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #2ecc71;
+        }
+
+        .status-error {
+            background-color: #fadbd8;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .status-info {
+            background-color: #d6eaf8;
+            color: #3498db;
+            border: 1px solid #3498db;
+        }
+
+        .status-warning {
+            background-color: #fef9e7;
+            color: #f39c12;
+            border: 1px solid #f1c40f;
         }
 
         .table-container {
@@ -308,13 +382,23 @@
                 grid-template-columns: 1fr;
             }
 
-            .btn {
-                padding: 10px 15px;
-                font-size: 0.9rem;
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
             }
 
-            h1 {
-                font-size: 2rem;
+            .controls-left,
+            .controls-right {
+                width: 100%;
+            }
+
+            .api-input {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
@@ -345,14 +429,25 @@
         <p class="subtitle">管理您的短链接，支持文本、转发和跳转三种类型</p>
 
         <div class="controls">
-            <div class="link-count">
-                当前链接数: <span id="linkCount">6</span>
+            <div class="controls-left">
+                <input type="text" id="apiKeyInput" class="api-input" placeholder="输入API_KEY" />
+                <button class="btn btn-load" id="loadBtn">
+                    <i class="fas fa-cloud-download-alt"></i> 加载
+                </button>
+                <div class="link-count">
+                    链接数: <span id="linkCount">9</span>
+                </div>
             </div>
-
-            <button class="btn btn-save-all" id="saveAllBtn">
-                <i class="fas fa-save"></i> 保存所有
-            </button>
+            
+            <div class="controls-right">
+                <button class="btn btn-save-all" id="saveAllBtn">
+                    <i class="fas fa-save"></i> 保存所有
+                </button>
+            </div>
         </div>
+
+        <!-- 修复：移除style="display: none;" -->
+        <div id="statusMessage" class="status-message"></div>
 
         <div class="table-container">
             <table id="linksTable">
@@ -380,18 +475,131 @@
             return window.location.origin + `/s/${randomString}`;
         }
 
+        // 显示状态消息
+        function showStatus(message, type = 'info') {
+            const statusElement = document.getElementById('statusMessage');
+            
+            // 清除所有状态类
+            statusElement.className = 'status-message';
+            statusElement.classList.remove('status-success', 'status-error', 'status-info', 'status-warning', 'show');
+            
+            // 设置消息内容和样式
+            statusElement.textContent = message;
+            statusElement.classList.add(`status-${type}`);
+            
+            // 触发重绘
+            void statusElement.offsetWidth;
+            
+            // 显示消息
+            statusElement.classList.add('show');
+            
+            // 状态消息5秒后自动隐藏，但错误消息保持10秒
+            const hideTime = type === 'error' ? 10000 : 5000;
+            setTimeout(() => {
+                statusElement.classList.remove('show');
+            }, hideTime);
+        }
+
+        // 从服务器加载数据
+        async function loadDataFromServer() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                showStatus('请先输入API_KEY', 'error');
+                return false;
+            }
+
+            showStatus('正在从服务器加载数据...', 'info');
+            
+            // 禁用加载按钮避免重复点击
+            const loadBtn = document.getElementById('loadBtn');
+            loadBtn.disabled = true;
+            loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
+
+            try {
+                const response = await fetch('/edit/links', {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('API_KEY无效或已过期');
+                    } else if (response.status === 404) {
+                        throw new Error('服务器未找到数据，请先保存数据到服务器');
+                    } else if (response.status === 403) {
+                        throw new Error('API_KEY权限不足');
+                    } else {
+                        throw new Error(`HTTP错误! 状态码: ${response.status}`);
+                    }
+                }
+                
+                const remoteData = await response.json();
+                console.log('从服务器加载的数据:', remoteData);
+
+                // 如果有远程数据，覆盖当前数据
+                if (remoteData && typeof remoteData === 'object' && Object.keys(remoteData).length > 0) {
+                    const rowIds = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6', 'row7', 'row8', 'row9'];
+                    let updatedCount = 0;
+
+                    rowIds.forEach(rowId => {
+                        if (remoteData[rowId]) {
+                            // 更新行数据
+                            updateRowData(rowId, remoteData[rowId]);
+                            updatedCount++;
+                        }
+                    });
+
+                    if (updatedCount > 0) {
+                        showStatus(`成功从服务器加载 ${updatedCount} 条链接数据`, 'success');
+                    } else {
+                        showStatus('服务器返回了数据，但没有可用的链接数据', 'warning');
+                    }
+                    return true;
+                } else {
+                    showStatus('服务器中没有数据，保留当前表格', 'info');
+                    return false;
+                }
+            } catch (error) {
+                console.error('加载远程数据失败:', error);
+                showStatus(`加载失败: ${error.message}`, 'error');
+                return false;
+            } finally {
+                // 重新启用加载按钮
+                loadBtn.disabled = false;
+                loadBtn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> 加载';
+            }
+        }
+
+        // 更新行数据
+        function updateRowData(rowId, linkData) {
+            const linkElement = document.getElementById(`link-${rowId}`);
+            const noteElement = document.getElementById(`note-${rowId}`);
+            const typeElement = document.getElementById(`type-${rowId}`);
+            
+            if (linkElement && linkData.link) {
+                linkElement.textContent = linkData.link;
+            }
+            
+            if (noteElement && linkData.note !== undefined) {
+                noteElement.value = linkData.note;
+            }
+            
+            if (typeElement && linkData.type) {
+                typeElement.value = linkData.type;
+            }
+        }
+
         // 双击链接重新生成链接
         function regenerateLink(linkElement, rowId) {
             const newLink = generateRandomLink();
             linkElement.textContent = newLink;
 
-            // 显示重新生成的提示
             const noticeElement = document.getElementById(`notice-${rowId}`);
             noticeElement.textContent = '链接已重新生成！';
             noticeElement.style.color = '#3498db';
             noticeElement.style.display = 'block';
 
-            // 2秒后隐藏提示
             setTimeout(() => {
                 noticeElement.style.display = 'none';
             }, 2000);
@@ -401,11 +609,9 @@
         function copyToClipboard(linkElement, noticeElement) {
             const link = linkElement.textContent;
             navigator.clipboard.writeText(link).then(() => {
-                // 显示复制成功提示
                 noticeElement.style.display = 'block';
                 noticeElement.textContent = '链接已复制到剪贴板！';
 
-                // 2秒后隐藏提示
                 setTimeout(() => {
                     noticeElement.style.display = 'none';
                 }, 2000);
@@ -422,85 +628,17 @@
             });
         }
 
-        // 从服务器加载数据
-        async function loadDataFromServer() {
-            try {
-                const response = await fetch('/edit/links');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const remoteData = await response.json();
-
-                // 清空表格
-                const tableBody = document.getElementById('tableBody');
-                tableBody.innerHTML = '';
-
-                // 如果有远程数据，使用远程数据
-                if (remoteData && Object.keys(remoteData).length > 0) {
-                    // 创建9行固定链接，使用远程数据
-                    const rowIds = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6',, 'row7', 'row8', 'row9'];
-
-                    rowIds.forEach(rowId => {
-                        if (remoteData[rowId]) {
-                            // 使用远程数据
-                            addRow(rowId, remoteData[rowId]);
-                        } else {
-                            // 如果远程数据中没有对应行，尝试从本地存储加载
-                            const savedData = JSON.parse(localStorage.getItem('linkManagerData') || '{}');
-                            if (savedData[rowId]) {
-                                addRow(rowId, savedData[rowId]);
-                            } else {
-                                // 否则添加一个默认行
-                                addRow(rowId);
-                            }
-                        }
-                    });
-
-                    // 更新链接计数
-                    updateLinkCount();
-                    return true;
-                } else {
-                    // 没有远程数据，从本地存储加载
-                    loadDataFromLocalStorage();
-                    return false;
-                }
-            } catch (error) {
-                console.error('加载远程数据失败:', error);
-                // 如果远程加载失败，从本地存储加载
-                loadDataFromLocalStorage();
-                return false;
-            }
-        }
-
-        // 从本地存储加载数据
-        function loadDataFromLocalStorage() {
-            const savedData = JSON.parse(localStorage.getItem('linkManagerData') || '{}');
-
-            // 清空表格
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-
-            const rowIds = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6', 'row7', 'row8', 'row9'];
-
-            rowIds.forEach(rowId => {
-                if (savedData[rowId]) {
-                    // 使用本地存储的数据
-                    addRow(rowId, savedData[rowId]);
-                } else {
-                    // 否则添加一个默认行
-                    addRow(rowId);
-                }
-            });
-
-            // 更新链接计数
-            updateLinkCount();
-        }
-
         // 保存所有行数据
-        function saveAllRows() {
+        async function saveAllRows() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                showStatus('请先输入API_KEY', 'error');
+                return;
+            }
+
             const rows = document.querySelectorAll('.link-row');
             if (rows.length === 0) {
-                alert('没有可保存的数据！');
+                showStatus('没有可保存的数据！', 'error');
                 return;
             }
 
@@ -517,31 +655,67 @@
                 savedCount++;
             });
 
-            // 保存到localStorage
-            localStorage.setItem('linkManagerData', JSON.stringify(allData));
+            showStatus('正在保存数据到服务器...', 'info');
+            
+            // 禁用保存按钮避免重复点击
+            const saveBtn = document.getElementById('saveAllBtn');
+            const originalHtml = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
 
-            // 保存到服务器
-            fetch('/edit/links', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(allData)
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('服务器保存失败');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('服务器保存成功:', data);
-                    alert(`已成功保存 ${savedCount} 条链接数据（本地和远程）！`);
-                })
-                .catch(error => {
-                    console.error('服务器保存失败:', error);
-                    alert(`已保存 ${savedCount} 条链接数据到本地存储，但服务器保存失败！是否绑定了KV存储？`);
+            try {
+                console.log('正在发送数据到服务器:', {
+                    url: '/edit/links',
+                    apiKey: apiKey ? '已设置' : '未设置',
+                    dataCount: savedCount
                 });
+                
+                const response = await fetch('/edit/links', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify(allData)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('API_KEY无效，请检查API_KEY设置');
+                    } else if (response.status === 403) {
+                        throw new Error('API_KEY权限不足');
+                    } else if (response.status === 400) {
+                        throw new Error('请求数据格式错误');
+                    } else {
+                        const errorText = await response.text();
+                        console.error('服务器错误响应:', errorText);
+                        throw new Error(`服务器保存失败，状态码: ${response.status}, 响应: ${errorText.substring(0, 100)}`);
+                    }
+                }
+                
+                const data = await response.json();
+                console.log('服务器保存成功:', data);
+                showStatus(`✅ 已成功保存 ${savedCount} 条链接数据到服务器`, 'success');
+                
+                // 保存成功后显示保存的时间
+                setTimeout(() => {
+                    const now = new Date();
+                    const timeStr = now.toLocaleTimeString('zh-CN', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                    showStatus(`数据已保存 (${timeStr})`, 'info');
+                }, 1000);
+                
+            } catch (error) {
+                console.error('服务器保存失败:', error);
+                showStatus(`❌ 保存失败: ${error.message}`, 'error');
+            } finally {
+                // 重新启用保存按钮
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalHtml;
+            }
         }
 
         // 添加一行
@@ -589,33 +763,39 @@
             });
         }
 
-        // 更新链接计数
-        function updateLinkCount() {
-            const rows = document.querySelectorAll('.link-row');
-            document.getElementById('linkCount').textContent = rows.length;
+        // 创建初始9行
+        function createInitialRows() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            const rowIds = ['row1', 'row2', 'row3', 'row4', 'row5', 'row6', 'row7', 'row8', 'row9'];
+
+            rowIds.forEach(rowId => {
+                addRow(rowId);
+            });
+
+            // 链接计数显示为9
+            document.getElementById('linkCount').textContent = '9';
         }
 
         // 初始化
-        document.addEventListener('DOMContentLoaded', async function () {
-            // 从服务器加载数据
-            const loadedFromServer = await loadDataFromServer();
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初始创建9行
+            createInitialRows();
 
-            if (!loadedFromServer) {
-                console.log('从服务器加载失败，已从本地存储加载数据。是否绑定了KV存储？');
-            }
-
-            // 添加"保存所有"按钮事件
+            // 加载按钮事件
+            document.getElementById('loadBtn').addEventListener('click', loadDataFromServer);
+            
+            // 保存所有按钮事件
             document.getElementById('saveAllBtn').addEventListener('click', saveAllRows);
 
-            // 添加键盘快捷键支持
-            document.addEventListener('keydown', function (e) {
-                // Ctrl+Enter 保存所有
-                if (e.ctrlKey && e.key === 'Enter') {
-                    saveAllRows();
+            // API_KEY输入框支持回车加载
+            document.getElementById('apiKeyInput').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    loadDataFromServer();
                 }
             });
         });
     </script>
 </body>
-
 </html>
