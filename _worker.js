@@ -466,9 +466,9 @@ async function handle_s(url, env) {
 					return new Response(`Forward failed: ${error.message}`, { status: 500 });
 				}
 			} else if (item.type === '跳转') {
-				// 302 跳转到 link
+				// 307 跳转到 link
 				return new Response(null, {
-					status: 302,
+					status: 307,
 					headers: {
 						'Location': item.note
 					}

@@ -27,121 +27,44 @@
 | ech= | ech-opts: {enable: true, query-server-name: cloudflare-ech.com} | EchCofigList | cloudflare-ech.com+https://223.5.5.5/dns-query |
 
 ## 部署方法
-1. 节点信息可以到源码中修改`CF_NODES`，注意：`vless://`等字符串做了防屏蔽，替换成了Base64。**用户必须灵活组合，实现混淆**。
+本工具由两部分组成，`订阅器`和`短网址`
 
-| 编码 | 解码 | 结果 | 说明 |
-|-----------------|------------------------------------------|-----------|---|
-| btoa('trojan') | `${atob('dHJvamFu').toLowerCase()}://` | trojan:// | |
-| btoa('TroJan') | `${atob('VHJvSmFu').toLowerCase()}://` | trojan:// | |
-| btoa('vless') | `${atob('dmxlc3M=').toLowerCase()}://` | vless:// | |
-| btoa('VlesS') | `${atob('Vmxlc1M=').toLowerCase()}://` | vless:// | |
-| btoa('vless:/') | `${atob('dmxlc3M6Lw==').toLowerCase()}/` | vless:// | |
-| btoa('sS://') | `${atob('c1M6Ly8=').toLowerCase()}` | ss:// | |
-| btoa('vmess') | `${atob('dm1lc3M=').toLowerCase()}://` | vmess:// | 在CF部署vmess也支持优选 |
+`短网址`必须：
+1. `绑定`->`KV命名空间`->变量名`KV`
+2. `设置`->`运行时`->`兼容性标志`->`global_fetch_strictly_public`
 
-```javascript
-let CF_NODES = `
+`订阅器`无要求。
+1. `Workers`部署复制代码即可。修改调试方便，国内无法直接访问，需配合自定义域
+2. `Pages`部署上传代码即可。无域名可选这种，提供了免费域名
 
-# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-${atob('VHJvSmFu').toLowerCase()}://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
-# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-${atob('Vmxlc1M=').toLowerCase()}://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
-# https://sub.xxcode.cc.cd/sub/CMQn3Tzisf?token=cpimNgEa
-${atob('dm1lc3M=').toLowerCase()}://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
+## 使用方法
+1. 访问`https://*.pages.dev/home`，进入订阅页面。提前准备好可用的节点文件，然后依次设置，观察链接是否可用
+2. 访问`https://*.pages.dev/edit`，进入短网址管理。提供了基础的短网址功能
 
-`;
-```
+## 我的推荐设置
+我有两份节点列表，一份是好友搭建的VPS节点，一份是收集的网友提供的CF节点。一般配置三个订阅
 
-2. 也可以到`设置`->`变量和机密`，添加`文本`，变量名`CF_NODES`。注意：这里`vless/trojan/ss/vmess`必须保持原始字符串
-```text
-
-# https://xxx.eu.cc/sub?token=1e0294bba5c6960fe5f5e600f0a883c9
-trojan://00000000-0000-4000-8000-000000000000@malaysia.com:443?security=tls&type=ws&host=xxx.eu.cc&fp=chrome&sni=xxx.eu.cc&encryption=none&ech=cloudflare-ech.com%2Bhttps%3A%2F%2F223.5.5.5%2Fdns-query&path=%2F#0000|%E9%A9%AC%E6%9D%A5%E8%A5%BF%E4%BA%9AMalaysia
-# https://xxx.xxxx.de5.net/sub?token=1d5638ceae20667ab8ddef752cae99bf
-vless://11111111-1111-4111-8111-111111111111@ct.090227.xyz:80?security=none&type=ws&host=xxx.xxxx.de5.net&fp=chrome&sni=xxx.xxxx.de5.net&encryption=none&path=%2F#1111|%E7%94%B5%E4%BF%A1090227
-# https://sub.xxcode.cc.cd/sub/CMQn3Tzisf?token=cpimNgEa
-vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogInNpbmdhcG9yZS54eGNvZGUuY2MuY2QiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYzUwOTM4N2UtNTIxNS00NTEyLTg2Y2ItYzc4NTQ4ZDlmYWRhIiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICJzaW5nYXBvcmUueHhjb2RlLmNjLmNkIiwNCiAgInBhdGgiOiAiL2Q0M2hsamhsNGV2Y3giLA0KICAidGxzIjogInRscyIsDQogICJzbmkiOiAic2luZ2Fwb3JlLnh4Y29kZS5jYy5jZCIsDQogICJhbHBuIjogImgyLGh0dHAvMS4xIiwNCiAgImZwIjogImNocm9tZSIsDQogICJpbnNlY3VyZSI6ICIxIg0KfQ==
-
-```
-4. 将代码部署到`Cloudflare Workers/Pages`，已经可以访问`https://*.pages.dev/domain/v2ray?token=CF节点`，查看效果
-5. 注意：`Pages`部署方式需要再上传一次，对`CF_NODES`环境变量的修改才会生效
-6. 如果是**非CF**节点，无法享受优选功能，可以将其当成一个节点汇集工具，将节点连接填写入`NOT_CF_NODES`中。它将**保持原样**，并排在`CF_NODES`之前
-
-## 优选域名使用方法(无法决定地区，节点超时概率低，推荐使用)
-1. 访问 `https://*.pages.dev/domain`，默认随机返回20条优选域名
-2. 访问 `https://*.pages.dev/domain/v2ray&token=CF节点`，可以查看生成的`v2ray`信息
-3. 访问 `https://*.pages.dev/domain/base64&token=CF节点`，可以查看生成的`v2ray`转`base64`格式信息
-4. 访问 `https://*.pages.dev/domain/sub&token=CF节点`，可以查看新订阅地址，复制新地址到浏览器或各软件中即可
-5. 访问 `https://*.pages.dev/domain/clash&token=CF节点`，本质是返回了`clash`转换地址所获取的数据，并做了调整
-6. 访问 `https://*.pages.dev/domain/singbox&token=CF节点`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
-7. 所有 `/domain/*`，都支持`limit`参数，例如：`https://*.pages.dev/domain?limit=10&token=CF节点`
-
-## 优选IP使用方法(可以选定地区，但节点超时概率高)
-1. 访问 `https://*.pages.dev/ip`，默认随机返回`HK-US`地区的`IP`，每区5只
-2. 访问 `https://*.pages.dev/ip/v2ray&token=CF节点`，可以查看生成的`v2ray`信息
-3. 访问 `https://*.pages.dev/ip/base64&token=CF节点`，可以查看生成的`v2ray`转`base64`格式信息
-4. 访问 `https://*.pages.dev/ip/sub&token=CF节点`，可以查看新订阅地址，复制新地址到浏览器或各软件中即可
-5. 访问 `https://*.pages.dev/ip/clash&token=CF节点`，本质是返回了`clash`转换地址所获取的数据，并做了调整
-6. 访问 `https://*.pages.dev/ip/singbox&token=CF节点`，本质是返回了`singbox`转换地址所获取的数据，并做了调整
-7. 所有 `/ip/*`功能都支持`region`和`limit`参数。例如：`https://*.pages.dev/ip?region=HK-US&limit=10-10&token=CF节点`。用`-`隔开。建议地区太多时，一定减少数量，可用于`edgetunnel`。
-
-## token参数
-所有的`/v2ray`、`/base64`、`/sub`、`/clash`、`/singbox`都需要提供`token`参数。
-- `token=CF节点`：授权返回`CF_NODES`变量扩展的CF优选节点
-- `token=非CF`：授权返回`NOT_CF_NODES`变量的固定节点
-- `token=非CF&token=CF节点`：返回两组组合
-
-可以到`设置`->`变量和机密`，添加`文本`，变量名`TOKENS`,例如：
-```text
-# 第1条，授权返回 CF_NODES 优选节点的信息
-ecae4617
-# 第2条，授权返回 NOT_CF_NODES 固定节点的信息 
-2ffbae0a-c425
-```
-想同时订阅两组节点，可以设置为
-```
-https://*.pages.dev/domain/clash&limit=20&token=ecae4617&token=2ffbae0a-c425
-```
+1. VPS节点
+	- 不支持优选，所以设置时`hostnames`留空，`region`留空，`foramt`为`clash`，这样可以多个节点混合使用
+2. CF节点，优选域名(推荐。节点连通率高，可长期不用更新订阅)
+	- `hostnames`选择第一项`优选域名`，`limit`为20，`foramt`为`clash`。基本有90%以上的节点可用
+3. CF节点，优选IP(优势是可选地区，节点延时小，但稳定性差，需要不定期重新订阅)
+	- `hostnames`选择第二项`优选IP(地区分组)`，`region`为`HK-JP-US`，`limit`为`10-6-10`，`foramt`为`clash`
 
 
-## 推荐订阅设置
-```html
-软件中订阅两条。因为域名比IP稳定，基本不用重新订阅，所以推荐平时用优选域名，需指定地区时再用优选IP
+一般常用优选域名；特殊需求用优选IP的地区分组；VPS节点用于代替CF节点不适用的情况，如`git clone`
 
-# 优选域名(推荐)
-https://*.pages.dev/domain/clash?limit=20&token=CF节点
-# 优选IP
-https://*.pages.dev/ip/clash?region=HK-JP-US&limit=10-6-10&token=CF节点
-
-# 自建VPS节点，不想与优选节点混用，基本不用重新订阅
-https://*.pages.dev/domain/clash?limit=20&token=非CF
-```
-
-## 订阅指定UA
+## 额外功能（指定UA爬取）
 1. 订阅时指定`UA`，临时解决部分软件不支持自定义`UA`的场景
 2. 访问 `https://*.pages.dev/fetch?ua=clash&url=https://xxx.xxxx.de5.net/sub?token=xxxx`
 3. `ua`为指定的`User-Agent`，`url`为机场订阅地址
 4. 此功能也能解决部分订阅地址无法直接访问的的场景
 
-## 全部环境变量
-| 变量名 | 说明 | 默认值 |
-|---|---|---|
-| TOKENS | 不同的token返回不同的节点，可以同时使用 | CF节点<br/>非CF |
-| CF_NODES | CF节点信息。**可以**根据优选域名IP增加节点 | |
-| NOT_CF_NODES | 非CF节点信息。**不可以**根据优选域名IP增加节点 | |
-| CONVERT_URL | v2ray转clash服务 | https://subapi.cmliussss.net |
-| CONFIG_URL | Clash模板文件 | [^1] |
-| BEST_IP_URL | 优选IP | [^2] |
-| BEST_DOMAINS | 优选域名。用户可将自己手工选出的**优选IP**也添加到此变量中 | |
-
-[^1]: https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini
-[^2]: https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt
 
 ## 其他问题
 1. `workers.dev`地址无法访问怎么办？
-	1. 临时可以科学上网，访问`https://*.workers.dev/sub&token=CF_NODES`得到的新地址一般可以直接访问
-	2. 部署成`Pages`, `*.pages.dev`一般是可以直接访问的
-	3. 添加自定义域，用新域名访问也可以
+	1. 部署成`Pages`, `*.pages.dev`一般是可以直接访问的
+	2. 添加自定义域，用新域名访问也可以
 2. 如何知道某个`uuid`和`sni`失效了？
 	1. 按名称排序，观察某个`uuid`是否全为`-1`或`Timeout`，别名`remark`前是`uuid`的前4位，可用于区分
 	2. 某软件代理6个一行，可以`NODES`数量不足时复制多份补全6条，这样一列就是同一`uuid`的，整列都超时就可以剔除了
@@ -170,16 +93,9 @@ https://zhuanlan.zhihu.com/p/3739662610
 
 感谢各位大佬提供的代码和服务
 
-## 优选IP源
-- https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt
-- https://zip.cm.edu.kg/all.txt
-
 ## 免责声明
 1. 本项目仅供教育、科学研究及个人安全测试之目的。
 2. 使用者在下载或使用本项目代码时，必须严格遵守所在地区的法律法规。
 3. 作者对任何滥用本项目代码导致的行为或后果均不承担任何责任。
 4. 本项目不对因使用代码引起的任何直接或间接损害负责。
 5. 建议在测试完成后 24 小时内删除本项目相关部署
-
-
-
