@@ -27,9 +27,9 @@
 | ech= | ech-opts: {enable: true, query-server-name: cloudflare-ech.com} | EchCofigList | cloudflare-ech.com+https://223.5.5.5/dns-query |
 
 ## 部署方法
-本工具由两部分组成，`订阅器`和`短网址`
+本工具由两部分组成，`订阅器`和`短链接`
 
-`短网址`必须：
+`短链接`必须：
 1. `绑定`->`KV命名空间`->变量名`KV`
 2. `设置`->`运行时`->`兼容性标志`->`global_fetch_strictly_public`
 3. `设置`->`变量和机密`->文本 变量名`API_KEY`->任意密码
@@ -40,10 +40,10 @@
 
 ## 使用方法
 1. 访问`https://*.pages.dev/home`，进入订阅页面。提前准备好可用的节点文件，然后依次设置，观察链接是否可用
-2. 访问`https://*.pages.dev/link`，进入短网址管理。提供了基础的短网址功能
+2. 访问`https://*.pages.dev/link`，进入短链接管理。提供了基础的短链接功能
 
 ## 我的推荐设置
-我有两份节点列表，一份是好友搭建的VPS节点，一份是收集的网友提供的CF节点。一般配置三个订阅
+两份节点列表，一份是好友搭建的VPS节点，一份是收集的网友分享的CF节点。一般配置三个订阅
 
 1. VPS节点
 	- 不支持优选，所以设置时`hostnames`留空，`region`留空，`foramt=clash`，这样可以多个节点混合使用
