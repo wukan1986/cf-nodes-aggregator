@@ -435,14 +435,13 @@ async function handle_link_edit(url, request, env) {
 
 	const method = request.method;
 	if (method === 'GET') {
-		const data = await STORAGE.get('link.json', { type: 'json' })||[];
-		const txt = JSON.stringify(data)
+		const txt = await STORAGE.get('link.json') || "[]";
 		return new Response(txt, { headers: { 'Content-Type': 'text/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
 	if (method === 'POST') {
 		const data = await request.json();
 		const txt = JSON.stringify(data)
-		const links = await STORAGE.put('link.json', txt);
+		await STORAGE.put('link.json', txt);
 		return new Response(txt, { headers: { 'Content-Type': 'text/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
 }
@@ -458,12 +457,10 @@ async function handle_s(url, env) {
 
 	// 查找匹配的链接
 	for (const [key, item] of Object.entries(data)) {
-		if (item.link === url.href) {
+		if (item.pathname === url.pathname) {
 			if (item.type === '文本') {
 				// 直接返回 note 内容
-				return new Response(item.note || '', {
-					headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-				});
+				return new Response(item.note || '', { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 			} else if (item.type === '转发') {
 				// 转发到 link 的内容
 				try {
@@ -474,12 +471,7 @@ async function handle_s(url, env) {
 				}
 			} else if (item.type === '跳转') {
 				// 307 跳转到 link
-				return new Response(null, {
-					status: 307,
-					headers: {
-						'Location': item.note
-					}
-				});
+				return new Response(null, { status: 307, headers: { 'Location': item.note } });
 			} else {
 				return new Response(`Unknown type: ${item.type}`, { status: 400 });
 			}
@@ -513,6 +505,7 @@ export default {
 		if (url.pathname.startsWith('/s/')) {
 			return await handle_s(url, env);
 		}
+		// env.KV.delete("link.json");
 
 		switch (url.pathname) {
 			case '/fetch':

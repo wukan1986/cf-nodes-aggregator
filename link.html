@@ -176,11 +176,11 @@
         .btn-save-all:hover {
             background: #8e44ad;
         }
-        
+
         .btn-add {
             background: #f39c12;
         }
-        
+
         .btn-add:hover {
             background: #d68910;
         }
@@ -356,7 +356,7 @@
         .btn-cell {
             min-width: 120px;
         }
-        
+
         .add-row-container {
             display: flex;
             justify-content: center;
@@ -452,7 +452,7 @@
                     链接数: <span id="linkCount">3</span>
                 </div>
             </div>
-            
+
             <div class="controls-right">
                 <button class="btn btn-save-all" id="saveAllBtn">
                     <i class="fas fa-save"></i> 保存所有
@@ -475,7 +475,7 @@
                 <tbody id="tableBody">
                 </tbody>
             </table>
-            
+
             <!-- 添加行按钮容器 -->
             <div class="add-row-container">
                 <button class="btn btn-add" id="addRowBtn">
@@ -488,7 +488,7 @@
     <script>
         // 当前行计数器
         let currentRowCount = 0;
-        
+
         // 生成随机唯一链接
         function generateRandomLink() {
             const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -502,21 +502,21 @@
         // 显示状态消息
         function showStatus(message, type = 'info') {
             const statusElement = document.getElementById('statusMessage');
-            
+
             // 清除所有状态类
             statusElement.className = 'status-message';
             statusElement.classList.remove('status-success', 'status-error', 'status-info', 'status-warning', 'show');
-            
+
             // 设置消息内容和样式
             statusElement.textContent = message;
             statusElement.classList.add(`status-${type}`);
-            
+
             // 触发重绘
             void statusElement.offsetWidth;
-            
+
             // 显示消息
             statusElement.classList.add('show');
-            
+
             // 状态消息5秒后自动隐藏，但错误消息保持10秒
             const hideTime = type === 'error' ? 10000 : 5000;
             setTimeout(() => {
@@ -533,7 +533,7 @@
             }
 
             showStatus('正在从服务器加载数据...', 'info');
-            
+
             // 禁用加载按钮避免重复点击
             const loadBtn = document.getElementById('loadBtn');
             loadBtn.disabled = true;
@@ -545,7 +545,7 @@
                         'Authorization': `Bearer ${apiKey}`
                     }
                 });
-                
+
                 if (!response.ok) {
                     if (response.status === 401) {
                         throw new Error('API_KEY无效或已过期');
@@ -557,26 +557,25 @@
                         throw new Error(`HTTP错误! 状态码: ${response.status}`);
                     }
                 }
-                
+
                 const remoteData = await response.json();
                 console.log('从服务器加载的数据:', remoteData);
 
-                // 如果有远程数据，覆盖当前数据
-                if (remoteData && typeof remoteData === 'object' && Object.keys(remoteData).length > 0) {
+                // 修改这里：处理数组格式的数据
+                if (remoteData && Array.isArray(remoteData) && remoteData.length > 0) {
                     // 清空当前表格
                     document.getElementById('tableBody').innerHTML = '';
                     currentRowCount = 0;
-                    
+
                     // 重新添加行
-                    const rowIds = Object.keys(remoteData);
-                    rowIds.forEach(rowId => {
-                        if (remoteData[rowId]) {
-                            addRow(rowId, remoteData[rowId]);
+                    remoteData.forEach(item => {
+                        if (item) {
+                            addRow(item.id, item);
                         }
                     });
 
-                    if (rowIds.length > 0) {
-                        showStatus(`成功从服务器加载 ${rowIds.length} 条链接数据`, 'success');
+                    if (remoteData.length > 0) {
+                        showStatus(`成功从服务器加载 ${remoteData.length} 条链接数据`, 'success');
                     } else {
                         showStatus('服务器返回了数据，但没有可用的链接数据', 'warning');
                     }
@@ -601,15 +600,15 @@
             const linkElement = document.getElementById(`link-${rowId}`);
             const noteElement = document.getElementById(`note-${rowId}`);
             const typeElement = document.getElementById(`type-${rowId}`);
-            
+
             if (linkElement && linkData.link) {
                 linkElement.textContent = linkData.link;
             }
-            
+
             if (noteElement && linkData.note !== undefined) {
                 noteElement.value = linkData.note;
             }
-            
+
             if (typeElement && linkData.type) {
                 typeElement.value = linkData.type;
             }
@@ -667,8 +666,7 @@
                 return;
             }
 
-            let savedCount = 0;
-            const allData = {};
+            const allData = [];  // 修改为数组
 
             rows.forEach(row => {
                 const rowId = row.id.split('-')[1];
@@ -676,12 +674,12 @@
                 const note = document.querySelector(`#note-${rowId}`).value.trim();
                 const type = document.querySelector(`#type-${rowId}`).value.trim();
 
-                allData[rowId] = { link, note, type };
-                savedCount++;
+                allData.push({ link, note, type, pathname: new URL(link).pathname });  // 改为push到数组
             });
+            console.log('保存的数据:', allData);
 
             showStatus('正在保存数据到服务器...', 'info');
-            
+
             // 禁用保存按钮避免重复点击
             const saveBtn = document.getElementById('saveAllBtn');
             const originalHtml = saveBtn.innerHTML;
@@ -692,16 +690,16 @@
                 console.log('正在发送数据到服务器:', {
                     url: '/link/edit',
                     apiKey: apiKey ? '已设置' : '未设置',
-                    dataCount: savedCount
+                    dataCount: allData.length
                 });
-                
+
                 const response = await fetch('/link/edit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${apiKey}`
                     },
-                    body: JSON.stringify(allData)
+                    body: JSON.stringify(allData)  // 现在发送数组
                 });
 
                 if (!response.ok) {
@@ -717,22 +715,22 @@
                         throw new Error(`服务器保存失败，状态码: ${response.status}, 响应: ${errorText.substring(0, 100)}`);
                     }
                 }
-                
+
                 const data = await response.json();
                 console.log('服务器保存成功:', data);
-                showStatus(`✅ 已成功保存 ${savedCount} 条链接数据到服务器`, 'success');
-                
+                showStatus(`✅ 已成功保存 ${allData.length} 条链接数据到服务器`, 'success');
+
                 // 保存成功后显示保存的时间
                 setTimeout(() => {
                     const now = new Date();
-                    const timeStr = now.toLocaleTimeString('zh-CN', { 
-                        hour: '2-digit', 
+                    const timeStr = now.toLocaleTimeString('zh-CN', {
+                        hour: '2-digit',
                         minute: '2-digit',
                         second: '2-digit'
                     });
                     showStatus(`数据已保存 (${timeStr})`, 'info');
                 }, 1000);
-                
+
             } catch (error) {
                 console.error('服务器保存失败:', error);
                 showStatus(`❌ 保存失败: ${error.message}`, 'error');
@@ -759,7 +757,7 @@
                     }
                 }
             }
-            
+
             const link = linkData ? linkData.link : generateRandomLink();
             const note = linkData ? linkData.note : '';
             const type = linkData ? linkData.type : '文本';
@@ -801,7 +799,7 @@
                 e.preventDefault();
                 regenerateLink(linkElement, rowId);
             });
-            
+
             // 更新链接计数
             updateLinkCount();
         }
@@ -837,10 +835,10 @@
 
             // 加载按钮事件
             document.getElementById('loadBtn').addEventListener('click', loadDataFromServer);
-            
+
             // 保存所有按钮事件
             document.getElementById('saveAllBtn').addEventListener('click', saveAllRows);
-            
+
             // 添加行按钮事件
             document.getElementById('addRowBtn').addEventListener('click', addRowHandler);
 
@@ -853,4 +851,5 @@
         });
     </script>
 </body>
+
 </html>
