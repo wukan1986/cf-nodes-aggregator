@@ -40,17 +40,17 @@
 
 ## 使用方法
 1. 访问`https://*.pages.dev/home`，进入订阅页面。提前准备好可用的节点文件，然后依次设置，观察链接是否可用
-2. 访问`https://*.pages.dev/edit`，进入短网址管理。提供了基础的短网址功能
+2. 访问`https://*.pages.dev/link`，进入短网址管理。提供了基础的短网址功能
 
 ## 我的推荐设置
 我有两份节点列表，一份是好友搭建的VPS节点，一份是收集的网友提供的CF节点。一般配置三个订阅
 
 1. VPS节点
-	- 不支持优选，所以设置时`hostnames`留空，`region`留空，`foramt`为`clash`，这样可以多个节点混合使用
+	- 不支持优选，所以设置时`hostnames`留空，`region`留空，`foramt=clash`，这样可以多个节点混合使用
 2. CF节点，优选域名(推荐。节点连通率高，可长期不用更新订阅)
-	- `hostnames`选择第一项`优选域名`，`limit`为20，`foramt`为`clash`。基本有90%以上的节点可用
+	- `hostnames`选择第一项`优选域名`，`limit=20`，`foramt=clash`。基本有90%以上的节点可用
 3. CF节点，优选IP(优势是可选地区，节点延时小，但稳定性差，需要不定期重新订阅)
-	- `hostnames`选择第二项`优选IP(地区分组)`，`region`为`HK-JP-US`，`limit`为`10-6-10`，`foramt`为`clash`
+	- `hostnames`选择第二项`优选IP(地区分组)`，`region=HK-JP-US&limit=10-6-10`,`foramt=clash`
 
 
 一般常用优选域名；特殊需求用优选IP的地区分组；VPS节点用于代替CF节点不适用的情况，如`git clone`
