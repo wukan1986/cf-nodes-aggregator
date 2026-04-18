@@ -435,14 +435,14 @@ async function handle_link_edit(url, request, env) {
 
 	const method = request.method;
 	if (method === 'GET') {
-		const data = await STORAGE.get('edit', { type: 'json' })||[];
+		const data = await STORAGE.get('link.json', { type: 'json' })||[];
 		const txt = JSON.stringify(data)
 		return new Response(txt, { headers: { 'Content-Type': 'text/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
 	if (method === 'POST') {
 		const data = await request.json();
 		const txt = JSON.stringify(data)
-		const links = await STORAGE.put('edit', txt);
+		const links = await STORAGE.put('link.json', txt);
 		return new Response(txt, { headers: { 'Content-Type': 'text/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
 }
@@ -450,7 +450,7 @@ async function handle_link_edit(url, request, env) {
 async function handle_s(url, env) {
 	const STORAGE = env.KV;
 	if (!STORAGE) return new Response('No KV storage available', { status: 500 });
-	const data = await STORAGE.get('edit', { type: 'json' });
+	const data = await STORAGE.get('link.json', { type: 'json' });
 
 	if (!data) {
 		return new Response('No data found', { status: 404 });

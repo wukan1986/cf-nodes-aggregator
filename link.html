@@ -672,9 +672,9 @@
 
             rows.forEach(row => {
                 const rowId = row.id.split('-')[1];
-                const link = document.querySelector(`#link-${rowId}`).textContent;
-                const note = document.querySelector(`#note-${rowId}`).value;
-                const type = document.querySelector(`#type-${rowId}`).value;
+                const link = document.querySelector(`#link-${rowId}`).textContent.trim();
+                const note = document.querySelector(`#note-${rowId}`).value.trim();
+                const type = document.querySelector(`#type-${rowId}`).value.trim();
 
                 allData[rowId] = { link, note, type };
                 savedCount++;
