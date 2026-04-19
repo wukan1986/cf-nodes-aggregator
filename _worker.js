@@ -138,7 +138,7 @@ function cleanupSomeExpired(cache, ttl, now, maxCount) {
 async function fetch_url(url, options = {}) {
 	if (!url) return '';
 	console.log('fetching', url, options);
-	const newData = await fetch(url, options = {}).then(res => res.text());
+	const newData = await fetch(url, options).then(res => res.text());
 	return newData;
 }
 
