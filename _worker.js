@@ -104,7 +104,6 @@ function withTimeoutCache(fn, options = {}) {
 				return item.value;
 			}
 		}
-
 		// 计算/获取结果
 		const result = await fn.apply(this, args);
 		// 清理过期缓存（如果 TTL 启用）
@@ -136,14 +135,14 @@ function cleanupSomeExpired(cache, ttl, now, maxCount) {
 	}
 }
 
-async function fetch_url(url) {
+async function fetch_url(url, options = {}) {
 	if (!url) return '';
-	console.log('fetching', url);
-	const newData = await fetch(url).then(res => res.text());
+	console.log('fetching', url, options);
+	const newData = await fetch(url, options = {}).then(res => res.text());
 	return newData;
 }
+
 const cached_fetch_30 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 30 });
-const cached_fetch_15 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 15 });
 
 function parse_hostname_item(line) {
 	// 支持从vless提取hostname, 也支持从`127.0.0.1:443#备注`提取hostname
@@ -328,15 +327,27 @@ function add_ech_to_singbox(jsonString) {
 async function handle_clash(url) {
 	const _url = url.searchParams.get('url');
 	// 订阅转换ech丢失，需要后期添加
-	const content = await cached_fetch_15(_url);
-	return new Response(add_ech_to_clash(content), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	try {
+		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(20000) });
+		return new Response(add_ech_to_clash(content), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	}
+	catch (error) {
+		console.log(error);
+		return new Response(error, { headers: { status: 500 } });
+	}
 }
 
 async function handle_singbox(url) {
 	const _url = url.searchParams.get('url');
 	// 订阅转换ech丢失，需要后期添加
-	const content = await cached_fetch_15(_url);
-	return new Response(add_ech_to_singbox(content), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	try {
+		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(20000) });
+		return new Response(add_ech_to_singbox(content), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	}
+	catch (error) {
+		console.log(error);
+		return new Response(error, { headers: { status: 500 } });
+	}
 }
 
 function zip(...arrays) {
@@ -363,6 +374,7 @@ function parse_new_line(inputText) {
 }
 
 async function handle_extract(url) {
+	// 5秒超时
 	let hostnames = await fetch_hostnames(url.searchParams.get('hostname'));
 	console.log(hostnames);
 	if (url.searchParams.get('region')) {
@@ -378,6 +390,7 @@ async function handle_extract(url) {
 }
 
 async function handle_v2ray(url, base64) {
+	// 5秒超时
 	let hostnames = await fetch_hostnames(url.searchParams.get('hostnames'));
 	console.log(hostnames);
 	if (url.searchParams.get('region')) {
@@ -389,13 +402,19 @@ async function handle_v2ray(url, base64) {
 		// 限制最多60条
 		hostnames = hostnames_limit(hostnames, get_limit(url, 80))
 	}
-
-	const content = await await cached_fetch_30(url.searchParams.get('nodes'));
-	const txt = content.includes('.') ? content : atob(content);
-	let nodes = parse_new_line(txt);
-	console.log(nodes);
-	nodes = 更新链接列表(hostnames, nodes)
-	nodes = 调整链接列表(nodes).join("\n")
+	let nodes;
+	try {
+		// 5秒超时
+		const content = await await cached_fetch_30(url.searchParams.get('nodes'), { signal: AbortSignal.timeout(5000) });
+		const txt = content.includes('.') ? content : atob(content);
+		nodes = parse_new_line(txt);
+		console.log(nodes);
+		nodes = 更新链接列表(hostnames, nodes)
+		nodes = 调整链接列表(nodes).join("\n")
+	} catch (e) {
+		console.log(e);
+		nodes = "vless://00000000-0000-4000-8000-000000000000@127.0.0.1:443?encryption=none&security=none&sni=example.com&fp=random&type=ws&host=example.com&path=%2F#nodes%20empty"
+	}
 	if (base64) nodes = btoa(nodes);
 	return new Response(nodes, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
@@ -405,20 +424,35 @@ async function fetch_hostnames(target_url) {
 	if (target_url.startsWith("sub://")) {
 		target_url = `${target_url.replace("sub://", "https://")}/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000`;
 	}
-	const content = await cached_fetch_30(target_url);
-	const txt = content.includes('.') ? content : atob(content);
-	return parse_hostname_text(txt);
+	try {
+		const content = await cached_fetch_30(target_url, { signal: AbortSignal.timeout(5000) });
+		const txt = content.includes('.') ? content : atob(content);
+		return parse_hostname_text(txt);
+	} catch (e) {
+		console.log(e, target_url);
+		// 超时了，还是返回些信息
+		return [{ hostname: "127.0.0.1", port: "80", hash: "hostnames empty" }];
+	}
 }
 
 async function handle_home(url) {
-	const text = await await cached_fetch_30(HOME_HTML);
-	return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	try {
+		const text = await await cached_fetch_30(HOME_HTML, { signal: AbortSignal.timeout(5000) });
+		return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	} catch (e) {
+		console.log(e, HOME_HTML);
+		return new Response(`${e}<br/>${HOME_HTML}`, { headers: { status: 500, 'Content-Type': 'text/html; charset=utf-8' } });
+	}
 }
 
-
 async function handle_link(url) {
-	const text = await await cached_fetch_30(LINK_HTML);
-	return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	try {
+		const text = await await cached_fetch_30(LINK_HTML, { signal: AbortSignal.timeout(5000) });
+		return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	} catch (e) {
+		console.log(e, LINK_HTML);
+		return new Response(`${e}<br/>${LINK_HTML}`, { headers: { status: 500, 'Content-Type': 'text/html; charset=utf-8' } });
+	}
 }
 
 async function handle_link_edit(url, request, env) {
@@ -464,7 +498,7 @@ async function handle_s(url, env) {
 			} else if (item.type === '转发') {
 				// 转发到 link 的内容
 				try {
-					const response = await fetch(item.note);
+					const response = await fetch(item.note, { signal: AbortSignal.timeout(25000) });
 					return response;
 				} catch (error) {
 					return new Response(`Forward failed: ${error.message}`, { status: 500 });
