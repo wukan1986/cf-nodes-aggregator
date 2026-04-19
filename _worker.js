@@ -75,21 +75,6 @@ const REGION_MAP = {
 	'AQ': '南极洲', 'TF': '法属南部领地', 'BV': '布韦岛', 'HM': '赫德岛和麦克唐纳群岛'
 };
 
-function mergeLastTwoInPlace(arr) {
-    if (arr.length < 2) {
-        return arr;
-    }
-    
-    const first = arr[arr.length - 2];
-    const second = arr[arr.length - 1];
-    const merged = first + second.substring(first.length);
-    
-    // 原地修改数组
-    arr.splice(-2, 2, merged);
-    
-    return arr;
-}
-
 // 简化版 YAML 处理器
 class SimpleYAML {
 	static parse(yaml) {
@@ -144,14 +129,14 @@ class SimpleYAML {
 
 	static stringify(obj, indent = 0) {
 		const lines = [];
-		let flag = false;
+		let line = null;
 
 		function process(value, currentIndent) {
 			if (Array.isArray(value)) {
 				for (const [index, item] of value.entries()) {
 					if (typeof item === 'object' && item !== null) {
-						lines.push(' '.repeat(currentIndent) + '-');
-						flag = true;
+						// lines.push(' '.repeat(currentIndent) + '-');
+						line = ' '.repeat(currentIndent) + '-';
 						process(item, currentIndent + 2);
 					} else {
 						lines.push(' '.repeat(currentIndent) + '- ' + item);
@@ -175,9 +160,9 @@ class SimpleYAML {
 					} else {
 						lines.push(' '.repeat(currentIndent) + key + ': ' + val);
 					}
-					if (flag) {
-						mergeLastTwoInPlace(lines);
-						flag = false;
+					if (line) {
+						lines[lines.length - 1] = line + lines.at(-1).slice(line.length);
+						line = null;
 					}
 				}
 			}
