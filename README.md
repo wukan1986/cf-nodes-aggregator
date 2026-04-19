@@ -27,7 +27,7 @@
 | ech= | ech-opts: {enable: true, query-server-name: cloudflare-ech.com} | EchCofigList | cloudflare-ech.com+https://223.5.5.5/dns-query |
 
 ## 部署方法
-本工具由两部分组成，`订阅器`和`短链接`
+本工具由两部分组成，`订阅器`和`短链接`，可以单独使用，也可搭配使用
 
 `短链接`必须：
 1. `绑定`->`KV命名空间`->变量名`KV`
@@ -42,6 +42,16 @@
 1. 访问`https://*.pages.dev/home`，进入订阅页面。提前准备好可用的节点文件，然后依次设置，观察链接是否可用
 2. 访问`https://*.pages.dev/link`，进入短链接管理。提供了基础的短链接功能
 
+## 额外功能（抓取优选信息）
+1. 例如：访问`https://*.pages.dev/extract?hostname=https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt&region=HK-JP-US&limit=10-6-10`，抓取IP信息
+2. 例如：访问`https://*.pages.dev/extract?hostname=https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/best_domains.txt&limit=20`，抓取域名信息
+
+## 额外功能（指定UA爬取）
+1. 订阅时指定`UA`，临时解决部分软件不支持自定义`UA`的场景
+2. 访问 `https://*.pages.dev/fetch?ua=clash&url=https://xxx.xxxx.de5.net/sub?token=xxxx`
+3. `ua`为指定的`User-Agent`，`url`为机场订阅地址
+4. 此功能也能解决部分订阅地址无法直接访问的的场景
+
 ## 我的推荐设置
 两份节点列表，一份是好友搭建的VPS节点，一份是收集的网友分享的CF节点。一般配置三个订阅
 
@@ -52,15 +62,7 @@
 3. CF节点，优选IP(优势是可选地区，节点延时小，但稳定性差，需要不定期重新订阅)
 	- `hostnames`选择第二项`优选IP(地区分组)`，`region=HK-JP-US&limit=10-6-10`,`foramt=clash`
 
-
 一般常用优选域名；特殊需求用优选IP的地区分组；VPS节点用于代替CF节点不适用的情况，如`git clone`
-
-## 额外功能（指定UA爬取）
-1. 订阅时指定`UA`，临时解决部分软件不支持自定义`UA`的场景
-2. 访问 `https://*.pages.dev/fetch?ua=clash&url=https://xxx.xxxx.de5.net/sub?token=xxxx`
-3. `ua`为指定的`User-Agent`，`url`为机场订阅地址
-4. 此功能也能解决部分订阅地址无法直接访问的的场景
-
 
 ## 其他问题
 1. `workers.dev`地址无法访问怎么办？
