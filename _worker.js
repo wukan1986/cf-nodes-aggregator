@@ -75,6 +75,119 @@ const REGION_MAP = {
 	'AQ': '南极洲', 'TF': '法属南部领地', 'BV': '布韦岛', 'HM': '赫德岛和麦克唐纳群岛'
 };
 
+function mergeLastTwoInPlace(arr) {
+    if (arr.length < 2) {
+        return arr;
+    }
+    
+    const first = arr[arr.length - 2];
+    const second = arr[arr.length - 1];
+    const merged = first + second.substring(first.length);
+    
+    // 原地修改数组
+    arr.splice(-2, 2, merged);
+    
+    return arr;
+}
+
+// 简化版 YAML 处理器
+class SimpleYAML {
+	static parse(yaml) {
+		const lines = yaml.split('\n');
+		const result = {};
+		const stack = [{ obj: result, indent: -1 }];
+
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i].trimEnd();
+			if (!line || line.startsWith('#')) continue;
+
+			// 计算缩进
+			const indent = line.search(/\S|$/);
+			const content = line.substring(indent);
+
+			// 回退栈到当前缩进级别
+			while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+				stack.pop();
+			}
+
+			const colonIndex = content.indexOf(':');
+			if (colonIndex !== -1) {
+				const key = content.substring(0, colonIndex).trim();
+				const value = content.substring(colonIndex + 1).trim();
+
+				let current = stack[stack.length - 1].obj;
+
+				if (value === '' || value === '|' || value === '>') {
+					// 开始多行字符串或嵌套对象
+					const newObj = {};
+					current[key] = newObj;
+					stack.push({ obj: newObj, indent });
+				} else {
+					// 简单键值对
+					if (value === 'null') {
+						current[key] = null;
+					} else if (value === 'true') {
+						current[key] = true;
+					} else if (value === 'false') {
+						current[key] = false;
+					} else if (!isNaN(value) && value !== '') {
+						current[key] = Number(value);
+					} else {
+						current[key] = value.replace(/^['"](.*)['"]$/, '$1');
+					}
+				}
+			}
+		}
+
+		return result;
+	}
+
+	static stringify(obj, indent = 0) {
+		const lines = [];
+		let flag = false;
+
+		function process(value, currentIndent) {
+			if (Array.isArray(value)) {
+				for (const [index, item] of value.entries()) {
+					if (typeof item === 'object' && item !== null) {
+						lines.push(' '.repeat(currentIndent) + '-');
+						flag = true;
+						process(item, currentIndent + 2);
+					} else {
+						lines.push(' '.repeat(currentIndent) + '- ' + item);
+					}
+				}
+			} else if (typeof value === 'object' && value !== null) {
+				for (const [key, val] of Object.entries(value)) {
+					if (val === null || val === undefined) {
+						lines.push(' '.repeat(currentIndent) + key + ': null');
+					} else if (typeof val === 'object') {
+						lines.push(' '.repeat(currentIndent) + key + ':');
+						process(val, currentIndent + 2);
+					} else if (typeof val === 'string') {
+						// 简单字符串转义
+						const needsQuotes = val.includes(':') || val.includes('#') ||
+							val.startsWith(' ') || val.endsWith(' ');
+						lines.push(' '.repeat(currentIndent) + key + ': ' +
+							(needsQuotes ? `"${val}"` : val));
+					} else if (typeof val === 'boolean') {
+						lines.push(' '.repeat(currentIndent) + key + ': ' + val);
+					} else {
+						lines.push(' '.repeat(currentIndent) + key + ': ' + val);
+					}
+					if (flag) {
+						mergeLastTwoInPlace(lines);
+						flag = false;
+					}
+				}
+			}
+		}
+
+		process(obj, indent);
+		return lines.join('\n');
+	}
+}
+
 function withTimeoutCache(fn, options = {}) {
 	const {
 		maxSize = 100,
@@ -532,6 +645,135 @@ async function apiKeyAuth(request, env) {
 	};
 }
 
+function VlessToClash(vlessUrl, options = {}) {
+	try {
+		const url = new URL(vlessUrl);
+		const params = new URLSearchParams(url.search);
+
+		// 基础信息提取
+		const node = {
+			name: decodeURIComponent(url.hash.slice(1)) || 'vless-auto',
+			type: 'vless',
+			server: url.hostname,
+			port: parseInt(url.port),
+			uuid: url.username,
+			network: params.get('type') || 'tcp',
+			tls: ['tls', 'reality'].includes(params.get('security')),
+			servername: params.get('sni') || undefined,
+			'client-fingerprint': params.get('fp') || 'chrome',
+			'skip-cert-verify': options.skipCertVerify || true
+		};
+
+		// 1. 处理流控 (Reality/Vision)
+		const flow = params.get('flow');
+		if (flow) node.flow = flow;
+
+		// 2. 处理传输层协议选项
+		const network = node.network;
+		if (network === 'ws') {
+			node['ws-opts'] = {
+				path: params.get('path') || '/',
+				headers: {}
+			};
+			const host = params.get('host');
+			if (host) node['ws-opts'].headers.host = host;
+		}
+
+		// 3. 处理安全层扩展 (Reality / ECH)
+		const security = params.get('security');
+		if (security === 'reality') {
+			node['reality-opts'] = {
+				'public-key': params.get('pbk')
+			};
+			const sid = params.get('sid');
+			if (sid) node['reality-opts']['short-id'] = sid;
+		}
+		if (params.has('ech')) {
+			node['ech-opts'] = { enabled: true, query_server_name: ECH_SNI };
+		}
+
+		// 清理空值
+		// const cleaned = JSON.parse(JSON.stringify(node));
+		return node;
+
+	} catch (error) {
+		throw new Error(`解析失败: ${error.message} ${vlessUrl}`);
+	}
+}
+
+async function handle_sub(url) {
+	const _url = url.searchParams.get('url');
+	const target = url.searchParams.get('target');
+	try {
+		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(5000) });
+		const txt = content.includes('.') ? content : atob(content);
+		const clash = ClashObj(parse_new_line(txt).map(line => VlessToClash(line)));
+		return new Response(SimpleYAML.stringify(clash), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	}
+	catch (error) {
+		console.log(error);
+		return new Response(error, { headers: { status: 500 } });
+	}
+}
+
+function ClashObj(proxies) {
+	const clash = {
+		port: 7890,
+		"socks-port": 7891,
+		"allow-lan": true,
+		mode: "rule",
+		"log-level": "info",
+		"external-controller": "127.0.0.1:9090",
+		proxies: [],
+		"proxy-groups": [
+			{
+				name: "🚀 节点选择",
+				type: "select",
+				proxies: ["♻️ 自动选择", "☑️ 手动切换", "DIRECT"]
+			},
+			{
+				name: "♻️ 自动选择",
+				type: "url-test",
+				url: "https://www.google.com/generate_204",
+				interval: 300,
+				tolerance: 50,
+				proxies: []
+			},
+			{
+				name: "☑️ 手动切换",
+				type: "select",
+				proxies: []
+			},
+			{
+				name: "🐟 漏网之鱼",
+				type: "select",
+				proxies: ["🚀 节点选择", "♻️ 自动选择", "DIRECT"]
+			}
+		],
+		rules: [
+			"GEOSITE,private,DIRECT",
+			"GEOSITE,category-ads-all,REJECT",
+			"GEOSITE,cn,DIRECT",
+			"GEOSITE,microsoft@cn,DIRECT",
+			"GEOSITE,apple-cn,DIRECT",
+			"GEOSITE,google-cn,DIRECT",
+			"GEOSITE,steam@cn,DIRECT",
+			"GEOSITE,category-games@cn,DIRECT",
+			"GEOSITE,gfw,🚀 节点选择",
+			"GEOIP,telegram,🚀 节点选择",
+			"GEOIP,private,DIRECT",
+			"GEOIP,CN,DIRECT",
+			"MATCH,🐟 漏网之鱼"
+		]
+	}
+	clash.proxies.push(...proxies);
+	const names = proxies.map(proxy => proxy.name);
+	clash["proxy-groups"][1].proxies.push(...names);
+	clash["proxy-groups"][2].proxies.push(...names);
+
+	return clash;
+}
+
 export default {
 	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
@@ -560,10 +802,13 @@ export default {
 				return await handle_link(url);
 			case '/link/edit':
 				return await handle_link_edit(url, request, env);
+			case '/sub':
+				return await handle_sub(url);
 
 			default:
 				return new Response('Hello World!');
 		}
 	},
 };
+
 

@@ -550,11 +550,8 @@
             <div class="input-field-group">
                 <div class="input-field-container">
                     <div class="input-field">
-                        <input list="convert_list" id="convert" value="https://subapi.cmliussss.net" />
+                        <input list="convert_list" id="convert"/>
                         <datalist id="convert_list">
-                            <option value="https://subapi.cmliussss.net">CM提供-负载均衡后端</option>
-                            <option value="https://subapi.fxxk.dedyn.io">CM提供-应急备用后端</option>
-                            <option value="https://url.v1.mk">肥羊提供</option>
                         </datalist>
                     </div>
                     <div class="button-group">
@@ -622,7 +619,7 @@
             <div class="input-field-group">
                 <div class="input-field-container">
                     <div class="input-field">
-                        <input type="checkbox" id="ech">
+                        <input type="checkbox" id="ech" disabled>
                     </div>
                 </div>
                 <div class="hint">
@@ -644,7 +641,7 @@
                             <option value="v2ray">v2ray</option>
                             <option value="base64">base64</option>
                             <option value="clash">clash</option>
-                            <option value="singbox">singbox</option>
+                            <!-- <option value="singbox">singbox</option> -->
                         </select>
                     </div>
                 </div>
@@ -1011,6 +1008,15 @@
                 { value: 'https://sub.lzjbaby.com/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '辣子鸡 优选' },
             ];
             addOptionsToDatalist('hostnames_list', options);
+
+            options = [
+                { value: window.location.origin, textContent: '同服务器提供(只实现了少量协议的转换)' },
+                { value: 'https://subapi.cmliussss.net', textContent: 'CM提供-负载均衡后端' },
+                { value: 'https://subapi.fxxk.dedyn.io', textContent: 'CM提供-应急备用后端' },
+                { value: 'https://url.v1.mk', textContent: '肥羊提供' },
+            ];
+            addOptionsToDatalist('convert_list', options);
+            document.getElementById('convert').value = options[0].value;
 
             options = [
                 { value: 'https://raw.githubusercontent.com/cmliu/ACL4SSR/main/Clash/config/ACL4SSR_Online.ini', textContent: 'ACL4SSR_Online.ini' },
