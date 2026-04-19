@@ -552,7 +552,8 @@
                     <div class="input-field">
                         <input list="convert_list" id="convert" value="https://subapi.cmliussss.net" />
                         <datalist id="convert_list">
-                            <option value="https://subapi.cmliussss.net">CM提供</option>
+                            <option value="https://subapi.cmliussss.net">CM提供-负载均衡后端</option>
+                            <option value="https://subapi.fxxk.dedyn.io">CM提供-应急备用后端</option>
                             <option value="https://url.v1.mk">肥羊提供</option>
                         </datalist>
                     </div>
@@ -766,7 +767,6 @@
                     } else {
                         showCopyMessage('已从剪贴板导入链接到输出框，但这不是本工具生成的配置链接。', 'success');
                     }
-
                 } catch (e) {
                     console.log('解析URL失败，可能不是链接格式:', e);
                     showCopyMessage('解析URL失败，可能不是链接格式：' + e, 'error');
@@ -929,12 +929,12 @@
         function updateOutput() {
             const nodes = document.getElementById('nodes').value.trim();
             const hostnames = document.getElementById('hostnames').value.trim();
-            const convert = document.getElementById('convert').value.trim();
+            const convert = document.getElementById('convert').value.trim().replace(/\/$/, '');;
             const config = document.getElementById('config').value.trim();
             const limit = document.getElementById('limit').value.trim();
             const region = document.getElementById('region').value.trim();
             const format = document.getElementById('format').value.trim();
-            const origin = document.getElementById('origin').value.trim();
+            const origin = document.getElementById('origin').value.trim().replace(/\/$/, '');;
             const ech = document.getElementById('ech').checked;
             const outputBox = document.getElementById('output_box');
 
