@@ -293,7 +293,6 @@
         }
 
         .clear-btn {
-            margin-top: 10px;
             background: #e74c3c;
             color: white;
             border: none;
@@ -304,6 +303,21 @@
 
         .clear-btn:hover {
             background: #c0392b;
+        }
+
+        /* 为新按钮添加特定样式 */
+        .import-btn {
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .import-btn:hover {
+            background-color: #8e44ad;
         }
 
         @media (max-width: 1200px) {
@@ -665,6 +679,9 @@
                     <button type="button" class="clear-btn" onclick="clearState()">
                         清空本地配置
                     </button>
+                    <button type="button" class="import-btn" onclick="importFromClipboard()">
+                        从剪贴板导入长链接
+                    </button>
                 </div>
             </div>
         </div>
@@ -672,6 +689,101 @@
     </div>
 
     <script>
+        // 从剪贴板导入长链接的函数
+        async function importFromClipboard() {
+            try {
+                // 检查是否支持剪贴板API
+                if (!navigator.clipboard || !navigator.clipboard.readText) {
+                    alert('您的浏览器不支持从剪贴板读取内容，请手动粘贴链接。');
+                    return;
+                }
+
+                // 读取剪贴板内容
+                const clipboardText = (await navigator.clipboard.readText()).trim();
+
+                // 在控制台输出剪贴板内容
+                console.log('剪贴板内容:', clipboardText);
+
+                // 尝试解析链接
+                try {
+                    let url = new URL(clipboardText);
+                    let pathname = url.pathname;
+                    let format;
+                    let ech;
+                    let config;
+                    let convert;
+                    let nodes;
+                    let hostnames;
+                    let region;
+                    let limit;
+                    let origin;
+                    if (pathname === "/clash" || pathname === "/singbox") {
+                        format = pathname.substring(1);
+                        ech = true;
+                        url = new URL(url.searchParams.get('url'));
+                        pathname = url.pathname;
+                    }
+                    if (pathname == "/sub") {
+                        ech = ech || false;
+                        format = url.searchParams.get('target');
+                        config = url.searchParams.get('config');
+                        convert = url.origin;
+                        url = new URL(url.searchParams.get('url'));
+                        pathname = url.pathname;
+                    }
+                    if (pathname == "/v2ray") {
+                        nodes = url.searchParams.get('nodes');
+                        hostnames = url.searchParams.get('hostnames');
+                        region = url.searchParams.get('region');
+                        limit = url.searchParams.get('limit');
+                        format = format || "v2ray";
+                        origin = url.origin;
+                    }
+                    if (pathname == "/base64") {
+                        nodes = url.searchParams.get('nodes');
+                        hostnames = url.searchParams.get('hostnames');
+                        region = url.searchParams.get('region');
+                        limit = url.searchParams.get('limit');
+                        format = format || "base64";
+                        origin = url.origin;
+                    }
+
+                    document.getElementById('nodes').value = nodes ? nodes : "";
+                    document.getElementById('hostnames').value = hostnames ? hostnames : "";
+                    document.getElementById('region').value = region ? region : "";
+                    document.getElementById('limit').value = limit ? limit : "";
+                    document.getElementById('convert').value = convert ? convert : "";
+                    document.getElementById('config').value = config ? config : "";
+                    document.getElementById('origin').value = origin ? origin : "";
+                    document.getElementById('format').value = format;
+                    document.getElementById('ech').checked = ech ? true : false;
+
+                    // 更新输出并保存状态
+                    updateOutput();
+                    saveState();
+                    if (document.getElementById('output_box').value === clipboardText) {
+                        showCopyMessage('成功从剪贴板导入配置！', 'success');
+                    } else {
+                        showCopyMessage('已从剪贴板导入链接到输出框，但这不是本工具生成的配置链接。', 'success');
+                    }
+
+                } catch (e) {
+                    console.log('解析URL失败，可能不是链接格式:', e);
+                    showCopyMessage('解析URL失败，可能不是链接格式：' + e, 'error');
+                }
+
+            } catch (err) {
+                console.error('读取剪贴板失败:', err);
+
+                // 处理权限被拒绝的情况
+                if (err.name === 'NotAllowedError') {
+                    alert('请允许访问剪贴板权限，或手动粘贴链接。');
+                } else {
+                    alert('读取剪贴板失败: ' + err.message);
+                }
+            }
+        }
+
         const STORAGE_KEY = "cfNodesPanelState";
 
         function saveState() {
