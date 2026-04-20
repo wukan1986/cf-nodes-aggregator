@@ -634,6 +634,23 @@
             </div>
         </div>
 
+        <!-- 文件名 -->
+        <div class="input-row">
+            <div class="input-label">文件名(filename):</div>
+            <div class="input-field-group">
+                <div class="input-field-container">
+                    <div class="input-field">
+                        <input id="filename" value="欢迎订阅" />
+                    </div>
+                </div>
+                <div class="hint">
+                    <ol>
+                        <li>可在支持文件名的客户端显示出来</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
         <!-- 输出格式 -->
         <div class="input-row">
             <div class="input-label">输出格式(format)：</div>
@@ -710,6 +727,7 @@
                     let url = new URL(clipboardText);
                     let pathname = url.pathname;
                     let format;
+                    let filename;
                     let ech;
                     let config;
                     let convert;
@@ -727,6 +745,7 @@
                     if (pathname == "/sub") {
                         ech = ech || false;
                         format = url.searchParams.get('target');
+                        filename = url.searchParams.get('filename');
                         config = url.searchParams.get('config');
                         convert = url.origin;
                         url = new URL(url.searchParams.get('url'));
@@ -738,6 +757,7 @@
                         region = url.searchParams.get('region');
                         limit = url.searchParams.get('limit');
                         format = format || "v2ray";
+                        filename = filename || url.searchParams.get('filename');
                         origin = url.origin;
                     }
                     if (pathname == "/base64") {
@@ -746,6 +766,7 @@
                         region = url.searchParams.get('region');
                         limit = url.searchParams.get('limit');
                         format = format || "base64";
+                        filename = filename || url.searchParams.get('filename');
                         origin = url.origin;
                     }
 
@@ -757,6 +778,7 @@
                     document.getElementById('config').value = config ? config : "";
                     document.getElementById('origin').value = origin ? origin : "";
                     document.getElementById('format').value = format;
+                    document.getElementById('filename').value = filename;
                     document.getElementById('ech').checked = ech ? true : false;
 
                     // 更新输出并保存状态
@@ -796,6 +818,7 @@
                 config: document.getElementById("config").value,
                 origin: document.getElementById("origin").value,
                 ech: document.getElementById("ech").checked,
+                filename: document.getElementById("filename").value,
                 format: document.getElementById("format").value
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -816,6 +839,7 @@
                 if (state.config) document.getElementById("config").value = state.config;
                 if (state.origin) document.getElementById("origin").value = state.origin;
                 if (state.ech !== undefined) document.getElementById("ech").checked = state.ech;
+                if (state.filename) document.getElementById("filename").value = state.format;
                 if (state.format) document.getElementById("format").value = state.format;
             } catch (e) {
                 console.warn("恢复 localStorage 失败", e);
@@ -889,14 +913,15 @@
             }, 3000);
         }
 
-        function 生成订阅链接(url, target, convert_url, config_url) {
-            const new_url = new URL(convert_url + "/sub?target=" + target + "&insert=false&emoji=false&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true");
+        function 生成订阅链接(url, target, convert, config, filename) {
+            const new_url = new URL(convert + "/sub?target=" + target + "&insert=false&emoji=false&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true");
             new_url.searchParams.set('url', url);
-            if (config_url) new_url.searchParams.set('config', config_url);
+            if (config) new_url.searchParams.set('config', config);
+            if (filename) new_url.searchParams.set('filename', filename);
             return new_url;
         }
 
-        function 生成服务链接(url, nodes, hostnames, region, limit, format) {
+        function 生成服务链接(url, nodes, hostnames, region, limit, format, filename) {
             const new_url = new URL(url);
             new_url.pathname = '/' + format;
             if (nodes) new_url.searchParams.set('nodes', nodes);
@@ -905,6 +930,7 @@
                 if (region) new_url.searchParams.set('region', region);
                 if (limit) new_url.searchParams.set('limit', limit);
             }
+            if (filename) new_url.searchParams.set('filename', filename);
             return new_url;
         }
 
@@ -936,6 +962,7 @@
             const format = document.getElementById('format').value.trim();
             const origin = document.getElementById('origin').value.trim().replace(/\/$/, '');;
             const ech = document.getElementById('ech').checked;
+            const filename = document.getElementById('filename').value.trim();
             const outputBox = document.getElementById('output_box');
 
             // TODO 目前源站和转换相同，忽略config，以后看情况修改
@@ -945,13 +972,13 @@
             switch (format) {
                 case 'v2ray':
                 case 'base64':
-                    url1 = 生成服务链接(origin, nodes, hostnames, region, limit, format);
+                    url1 = 生成服务链接(origin, nodes, hostnames, region, limit, format, filename);
                     outputBox.value = url1.href;
                     break;
                 case 'clash':
                 case 'singbox':
                     url1 = 生成服务链接(origin, nodes, hostnames, region, limit, 'base64');
-                    url2 = 生成订阅链接(url1.href, format, convert, config);
+                    url2 = 生成订阅链接(url1.href, format, convert, config, filename);
                     if (ech) {
                         url3 = 生成补丁链接(origin, format, url2);
                         outputBox.value = url3.href;

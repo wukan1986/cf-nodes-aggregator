@@ -446,7 +446,7 @@ async function handle_extract(url) {
 	return new Response(JSON.stringify(hostnames, null, 0), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 }
 
-async function handle_v2ray(url, base64) {
+async function handle_v2ray(url, request, base64) {
 	// 5秒超时
 	let hostnames = await fetch_hostnames(url.searchParams.get('hostnames'));
 	// console.log(hostnames);
@@ -466,7 +466,7 @@ async function handle_v2ray(url, base64) {
 
 		const txt = /[\.:]/.test(content) ? content : atob(content);
 		nodes = parse_new_line(txt);
-		console.log(nodes);
+		// console.log(nodes);
 		nodes = 更新链接列表(hostnames, nodes)
 		nodes = 调整链接列表(nodes).join("\n")
 	} catch (e) {
@@ -474,7 +474,16 @@ async function handle_v2ray(url, base64) {
 		nodes = "vless://00000000-0000-4000-8000-000000000000@127.0.0.1:443?encryption=none&security=none&sni=example.com&fp=random&type=ws&host=example.com&path=%2F#nodes%20empty";
 	}
 	if (base64) nodes = btoa(nodes);
-	return new Response(nodes, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+
+	const ua = (request.headers.get('User-Agent') || 'ua').toLowerCase();
+	// console.log(ua);
+	let filename = url.searchParams.get('filename');
+	if (filename && ua.includes('v2ray')) {
+		filename = decodeURIComponent(filename);
+		return new Response(nodes, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0', 'Content-Disposition': `attachment; filename*=utf-8''${encodeURIComponent(filename)}` } });
+	} else {
+		return new Response(nodes, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+	}
 }
 
 async function fetch_hostnames(target_url) {
@@ -605,7 +614,7 @@ function VlessTrojanAnytlsHysteria2ToClash(vlessUrl, options = {}) {
 			server: url.hostname,
 			port: parseInt(url.port),
 			network: params.get('type') || 'tcp',
-			'skip-cert-verify': options.skipCertVerify ?? (params.get('allowInsecure') === '1' || params.get('insecure') === '1')
+			'skip-cert-verify': options.skipCertVerify ?? (params.get('allowInsecure') === '1' || params.get('insecure') === '1'),
 		};
 		if (node.type === 'vless') {
 			node.uuid = url.username;
@@ -814,15 +823,24 @@ function ProxyUrlToClash(proxyUrl, options = {}) {
 	}
 }
 
-async function handle_sub(url) {
+async function handle_sub(url, request) {
 	const _url = url.searchParams.get('url');
 	const target = url.searchParams.get('target');
 	const scv = (url.searchParams.get('scv') || "true").toLowerCase() === 'true';
+	const ua = (request.headers.get('User-Agent') || 'ua').toLowerCase();
+	// console.log(ua);
+	let filename = url.searchParams.get('filename');
 	try {
 		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(5000) });
 		const txt = content.includes('.') ? content : atob(content);
 		const clash = ClashObj(parse_new_line(txt).map(line => ProxyUrlToClash(line, { skipCertVerify: scv })));
-		return new Response(SimpleYAML.stringify(clash), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+		const yaml = SimpleYAML.stringify(clash);
+		if (filename && (ua.includes('clash') || ua.includes('mihomo'))) {
+			filename = decodeURIComponent(filename);
+			return new Response(yaml, { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0', 'Content-Disposition': `attachment; filename*=utf-8''${encodeURIComponent(filename)}` } });
+		} else {
+			return new Response(yaml, { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+		}
 	}
 	catch (error) {
 		console.log(error);
@@ -950,9 +968,9 @@ export default {
 			case '/extract':
 				return await handle_extract(url);
 			case '/v2ray':
-				return await handle_v2ray(url, false);
+				return await handle_v2ray(url, request, false);
 			case '/base64':
-				return await handle_v2ray(url, true);
+				return await handle_v2ray(url, request, true);
 			// case '/clash':
 			// 	return await handle_clash(url);
 			// case '/singbox':
@@ -964,7 +982,7 @@ export default {
 			case '/link/edit':
 				return await handle_link_edit(url, request, env);
 			case '/sub':
-				return await handle_sub(url);
+				return await handle_sub(url, request);
 
 			default:
 				return new Response('Hello World!');
