@@ -271,13 +271,16 @@ function 更新协议链接(url, hostname, port, hash) {
 }
 
 function 调整协议链接(url) {
+	return url;
+	// TODO: clash转换由自己处理了，没必要加标记了
+
 	if (url.startsWith('vmess://'))
 		return url;
 
 	const url1 = new URL(url);
 	const path = url1.searchParams.get('path');
 	if (!path) return url;
-	const url2 = new URL(path, "http://127.0.0.1");
+	const url2 = new URL(decodeURIComponent(path), "http://127.0.0.1");
 	const ech = url1.searchParams.get('ech');
 	if (ech) {
 		// path中加ech=1
@@ -690,8 +693,8 @@ function VlessTrojanAnytlsHysteria2ToClash(vlessUrl, options = {}) {
 			}
 
 			node['ech-opts'] = {
-				enabled: true,
-				query_server_name: queryServerName
+				enable: true,
+				"query-server-name": queryServerName
 			};
 		}
 
@@ -877,7 +880,8 @@ function ClashObj(proxies) {
 		"allow-lan": true,
 		mode: "rule",
 		"log-level": "info",
-		"external-controller": "0.0.0.0:9090",
+		"global-client-fingerprint": "firefox",
+		"external-controller": ":9090",
 		proxies: [],
 		"proxy-groups": [
 			{
