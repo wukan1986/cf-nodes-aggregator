@@ -550,7 +550,7 @@
             <div class="input-field-group">
                 <div class="input-field-container">
                     <div class="input-field">
-                        <input list="convert_list" id="convert"/>
+                        <input list="convert_list" id="convert" />
                         <datalist id="convert_list">
                         </datalist>
                     </div>
@@ -561,8 +561,10 @@
                 </div>
                 <div class="hint important-hint">
                     <ol>
-                        <li>clash/singbox格式需要转换服务</li>
-                        <li>订阅转换服务源码：https://github.com/cmliu/sub-web-modify</li>
+                        <li>clash/singbox格式需要转换服务。使用第三方服务需知有泄漏订阅信息风险</li>
+                        <li>订阅转换服务前端源码：https://github.com/cmliu/sub-web-modify</li>
+                        <li>订阅转换服务后端源码：https://github.com/tindy2013/subconverter</li>
+                        <li>本项目中集成了简版的订阅转换服务，只支持部分协议的少量配置，推荐使用，欢迎pr</li>
                     </ol>
                 </div>
             </div>
@@ -585,7 +587,8 @@
                 <div class="hint">
                     <ol>
                         <li>不同的配置模板，生成的订阅文件不同</li>
-                        <li>配置模板源码：https://github.com/ACL4SSR/ACL4SSR/tree/master/Clash/config</li>
+                        <li>某版配置模板源码：https://github.com/ACL4SSR/ACL4SSR/tree/master/Clash/config</li>
+                        <li>本项目中简版订阅转换服务，忽略此项</li>
                     </ol>
                 </div>
             </div>
@@ -889,7 +892,7 @@
         function 生成订阅链接(url, target, convert_url, config_url) {
             const new_url = new URL(convert_url + "/sub?target=" + target + "&insert=false&emoji=false&list=false&tfo=false&scv=true&fdn=false&sort=false&new_name=true");
             new_url.searchParams.set('url', url);
-            new_url.searchParams.set('config', config_url);
+            if (config_url) new_url.searchParams.set('config', config_url);
             return new_url;
         }
 
@@ -927,13 +930,16 @@
             const nodes = document.getElementById('nodes').value.trim();
             const hostnames = document.getElementById('hostnames').value.trim();
             const convert = document.getElementById('convert').value.trim().replace(/\/$/, '');;
-            const config = document.getElementById('config').value.trim();
+            let config = document.getElementById('config').value.trim();
             const limit = document.getElementById('limit').value.trim();
             const region = document.getElementById('region').value.trim();
             const format = document.getElementById('format').value.trim();
             const origin = document.getElementById('origin').value.trim().replace(/\/$/, '');;
             const ech = document.getElementById('ech').checked;
             const outputBox = document.getElementById('output_box');
+
+            // TODO 目前源站和转换相同，忽略config，以后看情况修改
+            if (origin === convert) config = null;
 
             let url1, url2, url3;
             switch (format) {
@@ -1010,7 +1016,7 @@
             addOptionsToDatalist('hostnames_list', options);
 
             options = [
-                { value: window.location.origin, textContent: '同服务器提供(只实现了少量协议的转换)' },
+                { value: window.location.origin, textContent: '同服务器提供(只实现了少量协议部分配置转换)' },
                 { value: 'https://subapi.cmliussss.net', textContent: 'CM提供-负载均衡后端' },
                 { value: 'https://subapi.fxxk.dedyn.io', textContent: 'CM提供-应急备用后端' },
                 { value: 'https://url.v1.mk', textContent: '肥羊提供' },

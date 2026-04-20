@@ -398,6 +398,7 @@ function 生成补丁链接(url1, format, url2) {
 }
 
 function add_ech_to_clash(yamlString) {
+	// 注意：这代码只支持subconverter {}风格的处理，不支持yaml格式
 	return yamlString.replace(
 		/(ws-opts.*?ech=1.*?)(}})(?![^}]*ech-opts)/g,
 		`$1}}, ech-opts: {enable: true, query-server-name: ${ECH_SNI}}`
@@ -422,31 +423,32 @@ function add_ech_to_singbox(jsonString) {
 	});
 	return JSON.stringify(config, null, 2);
 }
-async function handle_clash(url) {
-	const _url = url.searchParams.get('url');
-	// 订阅转换ech丢失，需要后期添加
-	try {
-		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(20000) });
-		return new Response(add_ech_to_clash(content), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
-	}
-	catch (error) {
-		console.log(error);
-		return new Response(error, { headers: { status: 500 } });
-	}
-}
 
-async function handle_singbox(url) {
-	const _url = url.searchParams.get('url');
-	// 订阅转换ech丢失，需要后期添加
-	try {
-		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(20000) });
-		return new Response(add_ech_to_singbox(content), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
-	}
-	catch (error) {
-		console.log(error);
-		return new Response(error, { headers: { status: 500 } });
-	}
-}
+// async function handle_clash(url) {
+// 	const _url = url.searchParams.get('url');
+// 	// 订阅转换ech丢失，需要后期添加
+// 	try {
+// 		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(20000) });
+// 		return new Response(add_ech_to_clash(content), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+// 	}
+// 	catch (error) {
+// 		console.log(error);
+// 		return new Response(error, { headers: { status: 500 } });
+// 	}
+// }
+
+// async function handle_singbox(url) {
+// 	const _url = url.searchParams.get('url');
+// 	// 订阅转换ech丢失，需要后期添加
+// 	try {
+// 		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(20000) });
+// 		return new Response(add_ech_to_singbox(content), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
+// 	}
+// 	catch (error) {
+// 		console.log(error);
+// 		return new Response(error, { headers: { status: 500 } });
+// 	}
+// }
 
 function zip(...arrays) {
 	const length = Math.min(...arrays.map(arr => arr.length));
@@ -490,7 +492,7 @@ async function handle_extract(url) {
 async function handle_v2ray(url, base64) {
 	// 5秒超时
 	let hostnames = await fetch_hostnames(url.searchParams.get('hostnames'));
-	console.log(hostnames);
+	// console.log(hostnames);
 	if (url.searchParams.get('region')) {
 		hostnames = hostnames_limit_region(group_hostnames_by_hash(hostnames), get_limit_region(url, 30));
 		// 限制最多60条
@@ -504,14 +506,15 @@ async function handle_v2ray(url, base64) {
 	try {
 		// 5秒超时
 		const content = await await cached_fetch_30(url.searchParams.get('nodes'), { signal: AbortSignal.timeout(5000) });
-		const txt = content.includes('.') ? content : atob(content);
+
+		const txt = /[\.:]/.test(content) ? content : atob(content);
 		nodes = parse_new_line(txt);
 		console.log(nodes);
 		nodes = 更新链接列表(hostnames, nodes)
 		nodes = 调整链接列表(nodes).join("\n")
 	} catch (e) {
 		console.log(e);
-		nodes = "vless://00000000-0000-4000-8000-000000000000@127.0.0.1:443?encryption=none&security=none&sni=example.com&fp=random&type=ws&host=example.com&path=%2F#nodes%20empty"
+		nodes = "vless://00000000-0000-4000-8000-000000000000@127.0.0.1:443?encryption=none&security=none&sni=example.com&fp=random&type=ws&host=example.com&path=%2F#nodes%20empty";
 	}
 	if (base64) nodes = btoa(nodes);
 	return new Response(nodes, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
@@ -524,7 +527,7 @@ async function fetch_hostnames(target_url) {
 	}
 	try {
 		const content = await cached_fetch_30(target_url, { signal: AbortSignal.timeout(5000) });
-		const txt = content.includes('.') ? content : atob(content);
+		const txt = /[\.:]/.test(content) ? content : atob(content);
 		return parse_hostname_text(txt);
 	} catch (e) {
 		console.log(e, target_url);
@@ -630,24 +633,47 @@ async function apiKeyAuth(request, env) {
 	};
 }
 
-function VlessToClash(vlessUrl, options = {}) {
+function VlessTrojanAnytlsHysteria2ToClash(vlessUrl, options = {}) {
 	try {
 		const url = new URL(vlessUrl);
-		const params = new URLSearchParams(url.search);
+		const params = url.searchParams;
+		const protocol = url.protocol.slice(0, -1); // 去掉末尾的 ":"
 
 		// 基础信息提取
 		const node = {
-			name: decodeURIComponent(url.hash.slice(1)) || 'vless-auto',
-			type: 'vless',
+			name: decodeURIComponent(url.hash.slice(1)) || `${protocol}-auto`,
+			type: protocol,
 			server: url.hostname,
 			port: parseInt(url.port),
-			uuid: url.username,
 			network: params.get('type') || 'tcp',
-			tls: ['tls', 'reality'].includes(params.get('security')),
-			servername: params.get('sni') || undefined,
-			'client-fingerprint': params.get('fp') || 'chrome',
-			'skip-cert-verify': options.skipCertVerify || true
+			'skip-cert-verify': options.skipCertVerify ?? (params.get('allowInsecure') === '1' || params.get('insecure') === '1')
 		};
+		if (node.type === 'vless') {
+			node.uuid = url.username;
+			node.servername = params.get('sni') || undefined;
+			node.tls = ['tls', 'reality'].includes(params.get('security'));
+			node['client-fingerprint'] = params.get('fp') || 'chrome';
+		}
+		if (node.type === 'trojan') {
+			node.password = url.username;
+			node.sni = params.get('sni') || params.get('host') || undefined;
+			node.tls = true; // Trojan 总是启用 TLS
+			node['client-fingerprint'] = params.get('fp') || 'chrome';
+		}
+		if (node.type === 'anytls') {
+			node.password = url.username;
+		}
+		if (node.type === 'hysteria2') {
+			node.auth = url.username;
+			node.password = url.username;
+		}
+
+
+		// 处理 encryption 字段
+		const encryption = params.get('encryption');
+		if (encryption && encryption !== 'none') {
+			node.encryption = encryption;
+		}
 
 		// 1. 处理流控 (Reality/Vision)
 		const flow = params.get('flow');
@@ -661,7 +687,22 @@ function VlessToClash(vlessUrl, options = {}) {
 				headers: {}
 			};
 			const host = params.get('host');
-			if (host) node['ws-opts'].headers.host = host;
+			if (host) node['ws-opts'].headers.Host = host;
+		} else if (network === 'grpc') {
+			node['grpc-opts'] = {
+				'grpc-service-name': params.get('serviceName') || ''
+			};
+		} else if (network === 'h2') {
+			node['h2-opts'] = {
+				host: params.get('host') ? [params.get('host')] : [],
+				path: params.get('path') || '/'
+			};
+		}
+
+		// 处理 ALPN 参数
+		const alpn = params.get('alpn');
+		if (alpn) {
+			node.alpn = alpn.split(','); // 转为数组格式：['h2', 'http/1.1']
 		}
 
 		// 3. 处理安全层扩展 (Reality / ECH)
@@ -673,26 +714,155 @@ function VlessToClash(vlessUrl, options = {}) {
 			const sid = params.get('sid');
 			if (sid) node['reality-opts']['short-id'] = sid;
 		}
-		if (params.has('ech')) {
-			node['ech-opts'] = { enabled: true, query_server_name: ECH_SNI };
+
+		// 修复 ECH 处理逻辑
+		const echParam = params.get('ech');
+		if (echParam) {
+			// 解码 URL 编码的参数
+			const decodedEch = decodeURIComponent(echParam);
+
+			// 提取 query_server_name (ECH 配置的第一部分)
+			let queryServerName = decodedEch;
+
+			// 处理多种分隔符格式
+			if (decodedEch.includes('+')) {
+				queryServerName = decodedEch.split('+')[0];
+			} else if (decodedEch.includes('%2B')) {
+				queryServerName = decodedEch.split('%2B')[0];
+			} else if (decodedEch.includes(' ')) {
+				queryServerName = decodedEch.split(' ')[0];
+			}
+
+			node['ech-opts'] = {
+				enabled: true,
+				query_server_name: queryServerName
+			};
 		}
 
-		// 清理空值
-		// const cleaned = JSON.parse(JSON.stringify(node));
 		return node;
 
 	} catch (error) {
-		throw new Error(`解析失败: ${error.message} ${vlessUrl}`);
+		throw new Error(`Vless/Trojan/Anytls/Hysteria2解析失败: ${error.message} ${vlessUrl}`);
+	}
+}
+
+function VmessToClash(vmessUrl, options = {}) {
+	try {
+		const config = JSON.parse(atob(vmessUrl.substring(8)));
+		// console.log(config);
+
+		// 2. 基础信息提取
+		const node = {
+			name: decodeGarbledText(config.ps) || 'vmess-auto',
+			type: 'vmess',
+			server: config.add || config.host || '127.0.0.1',
+			port: parseInt(config.port) || 443,
+			uuid: config.id,
+			alterId: config.aid || 0,
+			cipher: config.scy || 'auto',
+			tls: config.tls === 'tls',
+			'skip-cert-verify': true
+		};
+
+		// 3. 处理传输层协议
+		const network = config.net || 'tcp';
+		node.network = network;
+
+		// 3.2 WS 配置
+		if (network === 'ws') {
+			node['ws-opts'] = {
+				path: config.path || '/',
+				headers: {}
+			};
+
+			node['ws-opts'].headers.Host = node.server;
+		}
+
+		// 5. 处理流控
+		if (config.v === '2') {
+			// VMess AEAD
+			node.alterId = 0;
+		}
+
+		// 6. 处理传输层安全
+		if (config.scy) {
+			node.cipher = config.scy;
+		}
+
+		// 7. 处理 UDP
+		if (config.hasOwnProperty('udp')) {
+			node.udp = config.udp;
+		}
+
+		return node;
+
+	} catch (error) {
+		throw new Error(`VMess解析失败: ${error.message} ${vmessUrl}`);
+	}
+}
+
+function TuicToClash(tuicUrl, options = {}) {
+	try {
+		const url = new URL(tuicUrl);
+		const params = url.searchParams;
+
+		// 基础信息提取
+		const node = {
+			name: decodeURIComponent(url.hash.slice(1)) || 'tuic-auto',
+			type: 'tuic',
+			server: url.hostname,
+			port: parseInt(url.port) || 443,
+			uuid: url.username,
+			password: url.password, // 目前v2ray导出的格式对: 没有正确处理，需手工处理一下
+			'congestion-controller': params.get('congestion_control') || params.get('congestion-control') || 'cubic',
+			'udp-relay-mode': params.get('udp_relay_mode') || params.get('udp-relay-mode') || 'native',
+			'disable-sni': params.get('disable_sni') === '1' || params.get('disable-sni') === '1' || false,
+			'skip-cert-verify': options.skipCertVerify ?? (params.get('allowInsecure') === '1' || params.get('insecure') === '1'),
+			'reduce-rtt': params.get('reduce_rtt') === '1' || params.get('reduce-rtt') === '1' || false
+		};
+
+		const alpn = params.get('alpn');
+		if (alpn) {
+			node['alpn'] = alpn.split(',') || ['h3'];
+		}
+
+		return node;
+
+	} catch (error) {
+		throw new Error(`Tuic解析失败: ${error.message} ${tuicUrl}`);
+	}
+}
+
+function ProxyUrlToClash(proxyUrl, options = {}) {
+	// TODO 这里只提供了最基础的协议转换，如果需要更多功能请自行扩展
+	try {
+		const url = new URL(proxyUrl);
+		switch (url.protocol) {
+			case 'vmess:':
+				return VmessToClash(proxyUrl, options);
+			case 'vless:':
+			case 'trojan:':
+			case 'anytls:':
+			case 'hysteria2:':
+				return VlessTrojanAnytlsHysteria2ToClash(proxyUrl, options);
+			case 'tuic:':
+				return TuicToClash(proxyUrl, options);
+			default:
+				throw new Error(`不支持的协议: ${url.protocol}`);
+		}
+	} catch (error) {
+		throw new Error(`解析失败: ${error.message}`);
 	}
 }
 
 async function handle_sub(url) {
 	const _url = url.searchParams.get('url');
 	const target = url.searchParams.get('target');
+	const scv = (url.searchParams.get('scv') || "true").toLowerCase() === 'true';
 	try {
 		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(5000) });
 		const txt = content.includes('.') ? content : atob(content);
-		const clash = ClashObj(parse_new_line(txt).map(line => VlessToClash(line)));
+		const clash = ClashObj(parse_new_line(txt).map(line => ProxyUrlToClash(line, { skipCertVerify: scv })));
 		return new Response(SimpleYAML.stringify(clash), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
 	catch (error) {
@@ -708,7 +878,7 @@ function ClashObj(proxies) {
 		"allow-lan": true,
 		mode: "rule",
 		"log-level": "info",
-		"external-controller": "127.0.0.1:9090",
+		"external-controller": "0.0.0.0:9090",
 		proxies: [],
 		"proxy-groups": [
 			{
@@ -777,10 +947,10 @@ export default {
 				return await handle_v2ray(url, false);
 			case '/base64':
 				return await handle_v2ray(url, true);
-			case '/clash':
-				return await handle_clash(url);
-			case '/singbox':
-				return await handle_singbox(url);
+			// case '/clash':
+			// 	return await handle_clash(url);
+			// case '/singbox':
+			// 	return await handle_singbox(url);
 			case '/home':
 				return await handle_home(url);
 			case '/link':
