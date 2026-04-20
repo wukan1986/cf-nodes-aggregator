@@ -1,9 +1,12 @@
 ﻿// ECH配置
 const ECH_SNI = "cloudflare-ech.com";
-const HOME_HTML = "https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/home.html";
-const LINK_HTML = "https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/link.html";
-// const HOME_HTML = "http://127.0.0.1:8080/home.html";
-// const LINK_HTML = "http://127.0.0.1:8080/link.html";
+
+// 提交到仓库时用
+const HOME_GITHUB = "https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/home.html";
+const LINK_GITHUB = "https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/link.html";
+// 本地测试访问127.0.0.1时使用，可本地执行http-server，开启服务
+const HOME_LOCAL = "http://127.0.0.1:8080/home.html";
+const LINK_LOCAL = "http://127.0.0.1:8080/link.html";
 /**
  * 地区名称映射 (全球主要 Cloudflare 节点所在国家/地区)
  */
@@ -77,56 +80,6 @@ const REGION_MAP = {
 
 // 简化版 YAML 处理器
 class SimpleYAML {
-	static parse(yaml) {
-		const lines = yaml.split('\n');
-		const result = {};
-		const stack = [{ obj: result, indent: -1 }];
-
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i].trimEnd();
-			if (!line || line.startsWith('#')) continue;
-
-			// 计算缩进
-			const indent = line.search(/\S|$/);
-			const content = line.substring(indent);
-
-			// 回退栈到当前缩进级别
-			while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
-				stack.pop();
-			}
-
-			const colonIndex = content.indexOf(':');
-			if (colonIndex !== -1) {
-				const key = content.substring(0, colonIndex).trim();
-				const value = content.substring(colonIndex + 1).trim();
-
-				let current = stack[stack.length - 1].obj;
-
-				if (value === '' || value === '|' || value === '>') {
-					// 开始多行字符串或嵌套对象
-					const newObj = {};
-					current[key] = newObj;
-					stack.push({ obj: newObj, indent });
-				} else {
-					// 简单键值对
-					if (value === 'null') {
-						current[key] = null;
-					} else if (value === 'true') {
-						current[key] = true;
-					} else if (value === 'false') {
-						current[key] = false;
-					} else if (!isNaN(value) && value !== '') {
-						current[key] = Number(value);
-					} else {
-						current[key] = value.replace(/^['"](.*)['"]$/, '$1');
-					}
-				}
-			}
-		}
-
-		return result;
-	}
-
 	static stringify(obj, indent = 0) {
 		const lines = [];
 		let line = null;
@@ -161,6 +114,7 @@ class SimpleYAML {
 						lines.push(' '.repeat(currentIndent) + key + ': ' + val);
 					}
 					if (line) {
+						// - 不单独成行
 						lines[lines.length - 1] = line + lines.at(-1).slice(line.length);
 						line = null;
 					}
@@ -537,22 +491,24 @@ async function fetch_hostnames(target_url) {
 }
 
 async function handle_home(url) {
+	const _url = url.hostname === '127.0.0.1' ? HOME_LOCAL : HOME_GITHUB;
 	try {
-		const text = await await cached_fetch_30(HOME_HTML, { signal: AbortSignal.timeout(5000) });
+		const text = await await cached_fetch_30(_url, { signal: AbortSignal.timeout(5000) });
 		return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	} catch (e) {
-		console.log(e, HOME_HTML);
-		return new Response(`${e}<br/>${HOME_HTML}`, { headers: { status: 500, 'Content-Type': 'text/html; charset=utf-8' } });
+		console.log(e, _url);
+		return new Response(`${e}<br/>${_url}`, { headers: { status: 500, 'Content-Type': 'text/html; charset=utf-8' } });
 	}
 }
 
 async function handle_link(url) {
+	const _url = url.hostname === '127.0.0.1' ? LINK_LOCAL : LINK_GITHUB;
 	try {
-		const text = await await cached_fetch_30(LINK_HTML, { signal: AbortSignal.timeout(5000) });
+		const text = await await cached_fetch_30(_url, { signal: AbortSignal.timeout(5000) });
 		return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	} catch (e) {
-		console.log(e, LINK_HTML);
-		return new Response(`${e}<br/>${LINK_HTML}`, { headers: { status: 500, 'Content-Type': 'text/html; charset=utf-8' } });
+		console.log(e, _url);
+		return new Response(`${e}<br/>${_url}`, { headers: { status: 500, 'Content-Type': 'text/html; charset=utf-8' } });
 	}
 }
 

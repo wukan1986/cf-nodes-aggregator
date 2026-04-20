@@ -27,20 +27,21 @@
 | ech= | ech-opts: {enable: true, query-server-name: cloudflare-ech.com} | EchCofigList | cloudflare-ech.com+https://223.5.5.5/dns-query |
 
 ## 部署方法
-本工具由两部分组成，`订阅器`和`短链接`，可以单独使用，也可搭配使用
+本工具由3部分组成，`订阅器`、`订阅转换后端`、`短链接`，可以单独使用，也可搭配使用
 
 `短链接`必须：
 1. `绑定`->`KV命名空间`->变量名`KV`
 2. `设置`->`运行时`->`兼容性标志`->`global_fetch_strictly_public`
 3. `设置`->`变量和机密`->文本 变量名`API_KEY`->任意密码
 
-`订阅器`无要求。
+`订阅器`、`订阅转换后端`无要求。
 1. `Workers`部署复制代码即可。修改调试方便，国内无法直接访问，需配合自定义域
 2. `Pages`部署上传代码即可。无域名可选这种，提供了免费域名
 
 ## 使用方法
 1. 访问`https://*.pages.dev/home`，进入订阅页面。提前准备好可用的节点文件，然后依次设置，观察链接是否可用
 2. 访问`https://*.pages.dev/link`，进入短链接管理。提供了基础的短链接功能
+2. 访问`https://*.pages.dev/sub`，与公开的订阅转换服务参数相同，但只识别`url`、`scv`参数
 
 ## 额外功能（抓取优选信息）
 1. 例如：访问`https://*.pages.dev/extract?hostname=https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt&region=HK-JP-US&limit=10-6-10`，抓取IP信息
@@ -75,6 +76,26 @@
 	1. 自己没域名，选`pages`，但每次修改变量要重新上传代码
 	2. `workers`修改调试方便，国内可搭配自定义域访问
 
+## 二次开发
+```commandline
+# 开一终端
+npm run dev
+# 访问 http://127.0.0.1:8787
+
+# 再开一终端
+npm install -g http-server
+http-server
+# 访问 http://127.0.0.1:8080
+
+```
+
+### 订阅转换二次开发
+1. 将一条订阅链接，复制到第三方服务中，生成`clash.yaml`文件,保存下来
+2. 将一条订阅链接，复制到`http://127.0.0.1:8080/link`中，复制随机生成的链接`A`
+3. 访问`http://127.0.0.1:8787/home`，将`A`粘贴到`nodes`字段中
+4. 将输出格式改成`clash`，输出框会有新链接`B`，用浏览器访问`B`，观察`yaml`文件
+5. 比较两次的`yaml`文件，找出不同的地方，在`_worker.js`中添加对应的逻辑，导入到软件中验证是否可用
+
 ## ECH
 发现目前网络上提供的`v2ray`转`clash/singbox`的服务都会丢失`ech`信息，本工具会试着补全`ECH`信息，
 底层会将`ech=1`标记在`path`字段，经过转换后，此字段还保留，可以被再次利用起来。
@@ -92,6 +113,7 @@ https://zhuanlan.zhihu.com/p/3739662610
 2. [byJoey/cfnew](https://github.com/byJoey/cfnew)
 3. [hc990275/sub](https://github.com/hc990275/sub)
 4. [alienwaregf/Cloudflare-Country-Specific-IP-Filter](https://github.com/alienwaregf/Cloudflare-Country-Specific-IP-Filter)
+4. [DaBoWin/cfssclash](https://github.com/DaBoWin/cfssclash)
 
 
 感谢各位大佬提供的代码和服务
