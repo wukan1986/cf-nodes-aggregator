@@ -827,6 +827,49 @@ async function handle_sub(url) {
 	}
 }
 
+function deduplicateProxyNamesConcise(proxies) {
+	if (!Array.isArray(proxies)) {
+		return [];
+	}
+
+	const nameMap = new Map(); // 存储每个名字出现的次数
+	const result = [];
+
+	proxies.forEach(proxy => {
+		if (!proxy) {
+			result.push(proxy);
+			return;
+		}
+
+		const newProxy = { ...proxy };
+
+		if (!newProxy.name) {
+			result.push(newProxy);
+			return;
+		}
+
+		const originalName = newProxy.name;
+
+		if (!nameMap.has(originalName)) {
+			// 第一次出现，直接使用
+			nameMap.set(originalName, 1);
+			result.push(newProxy);
+		} else {
+			// 已经出现过，需要添加后缀
+			const count = nameMap.get(originalName) + 1;
+			nameMap.set(originalName, count);
+
+			newProxy.name = `${originalName} ${count}`;
+			result.push(newProxy);
+
+			// 也记录新生成的名字
+			nameMap.set(newProxy.name, 1);
+		}
+	});
+
+	return result;
+}
+
 function ClashObj(proxies) {
 	const clash = {
 		port: 7890,
@@ -877,6 +920,9 @@ function ClashObj(proxies) {
 			"MATCH,🐟 漏网之鱼"
 		]
 	}
+
+	proxies = deduplicateProxyNamesConcise(proxies);
+
 	clash.proxies.push(...proxies);
 	const names = proxies.map(proxy => proxy.name);
 	clash["proxy-groups"][1].proxies.push(...names);
