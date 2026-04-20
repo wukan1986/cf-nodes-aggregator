@@ -802,6 +802,58 @@ function TuicToClash(tuicUrl, options = {}) {
 	}
 }
 
+function ShadowsocksToClash(ssUrl, options = {}) {
+	try {
+		// 解析完整的 Shadowsocks 链接
+		const url = new URL(ssUrl);
+		const params = url.searchParams;
+		console.log(url);
+
+		const [method, password] = atob(url.username).split(':');
+
+		const node = {
+			name: decodeURIComponent(url.hash.slice(1)) || 'ss-auto',
+			type: 'ss',
+			server: url.hostname,
+			port: parseInt(url.port) || 80,
+			cipher: method,
+			password: password,
+		};
+		console.log(node);
+
+		// 解析插件参数
+		const plugin = decodeURIComponent(url.searchParams.get('plugin'));
+		console.log(plugin);
+
+
+		if (plugin) {
+			const parts = plugin.split(';');
+			node.plugin = parts[0];
+
+			let pluginOpts = { tls: false, 'skip-cert-verify': false };
+
+			parts.slice(1).forEach(part => {
+				const eqIndex = part.indexOf('=');
+				if (eqIndex > 0) {
+					const key = part.substring(0, eqIndex);
+					const value = part.substring(eqIndex + 1);
+					pluginOpts[key] = decodeURIComponent(value);
+				}
+			});
+			// 如果有额外的参数
+			if (pluginOpts.mux !== undefined) {
+				pluginOpts.mux = pluginOpts.mux === "1";
+			}
+			node['plugin-opts'] = pluginOpts;
+		}
+
+		return node;
+
+	} catch (error) {
+		throw new Error(`Shadowsocks 解析失败: ${error.message} ${ssUrl}`);
+	}
+}
+
 function ProxyUrlToClash(proxyUrl, options = {}) {
 	// TODO 这里只提供了最基础的协议转换，如果需要更多功能请自行扩展
 	try {
@@ -816,6 +868,8 @@ function ProxyUrlToClash(proxyUrl, options = {}) {
 				return VlessTrojanAnytlsHysteria2ToClash(proxyUrl, options);
 			case 'tuic:':
 				return TuicToClash(proxyUrl, options);
+			case 'ss:':
+				return ShadowsocksToClash(proxyUrl, options);
 			default:
 				throw new Error(`不支持的协议: ${url.protocol}`);
 		}
