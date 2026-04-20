@@ -314,8 +314,8 @@ function hostnames_limit_region(region_hostname, limit_region) {
 			regionMap.set(region, []);
 		} else {
 			const name = REGION_MAP[region] || '未知地区';
-			// 随机一下，以免每次选出结果一
-			const shuffled = Array.from(hostnames_part).sort(() => Math.random() - 0.5);
+			// IP不随机
+			const shuffled = Array.from(hostnames_part)//.sort(() => Math.random() - 0.5);
 			const limitedList = shuffled.slice(0, limit).map((item, index) => ({ ...item, remark: `${item.hash} ${name} ${index + 1}` }));
 			regionMap.set(region, limitedList);
 		}
@@ -324,6 +324,7 @@ function hostnames_limit_region(region_hostname, limit_region) {
 }
 
 function hostnames_limit(hostnames, limit) {
+	// 域名随机
 	const shuffled = Array.from(hostnames).sort(() => Math.random() - 0.5);
 	return shuffled.slice(0, limit).map((item, index) => ({ ...item, remark: `${item.hash} ${index + 1}` }));
 }
