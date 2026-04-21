@@ -443,13 +443,11 @@
     <!-- 复制成功提示 -->
     <div id="copySuccess" class="copy-success">内容已复制到剪贴板！</div>
 
-    <!-- 顶部提示 -->
-    <div class="top-alert">
-        重要提示：所有🔗URL链接都必须确保公网能够访问，否则订阅将无法正常工作！
-    </div>
-
     <h3>CF NODES汇集面板</h3>
-
+    <p style="text-align: center; color: #666; margin-top: -20px; margin-bottom: 25px;">
+        本工具开源地址：<a href="https://github.com/wukan1986/cf-nodes-aggregator" target="_blank"
+            style="color: #3498db; font-weight: 600;">GitHub - wukan1986/cf-nodes-aggregator</a>
+    </p>
     <div class="form-container">
         <!-- 节点来源 -->
         <div class="input-row">
@@ -471,7 +469,7 @@
                         <li>目标链接的内容将先尝试Base64解码</li>
                         <li>必须是vless/trojan/ss节点的列表。优选时将扩增节点数量，替换节点中的hostname:port#hash</li>
                         <li>各机场的v2ray订阅链接本质也是节点链接</li>
-                        <li>节点文件可以托管到在线平台。如：https://gist.githubusercontent.com</li>
+                        <li>节点文件可以托管到在线平台。如：<a href="https://gist.github.com" target="_blank">GitHub Gist</a></li>
                         <li><a href="/link" target="_blank">节点文件没处托管？类型选"文本"</a> </li>
                     </ol>
                 </div>
@@ -499,7 +497,8 @@
                         <li>如果是vless/trojan/ss节点的列表，将从中提取节点中的hostname:port#hash供优选使用</li>
                         <li>如果是域名列表，将从中提取domain:port#hash供优选使用。无法限定IP地区，但节点稳定性高，推荐使用</li>
                         <li>如果是IP列表，将从中提取ip:port#hash供优选使用。如果hash提供了地区，就可以选，但节点稳定性低，建议仅限制地区时使用</li>
-                        <li>优选订阅服务源码：https://github.com/cmliu/EdgeOne-Pages-BestIP2SUB</li>
+                        <li>优选订阅服务源码：<a href="https://github.com/cmliu/EdgeOne-Pages-BestIP2SUB"
+                                target="_blank">cmliu/EdgeOne-Pages-BestIP2SUB</a></li>
                     </ol>
                 </div>
             </div>
@@ -562,8 +561,10 @@
                 <div class="hint important-hint">
                     <ol>
                         <li>clash/singbox格式需要转换服务。使用第三方服务需知有泄漏订阅信息风险</li>
-                        <li>订阅转换服务前端源码：https://github.com/cmliu/sub-web-modify</li>
-                        <li>订阅转换服务后端源码：https://github.com/tindy2013/subconverter</li>
+                        <li>订阅转换服务前端源码：<a href="https://github.com/cmliu/sub-web-modify"
+                                target="_blank">cmliu/sub-web-modify</a></li>
+                        <li>订阅转换服务后端源码：<a href="https://github.com/tindy2013/subconverter"
+                                target="_blank">tindy2013/subconverter</a></li>
                         <li>本项目中集成了简版的订阅转换服务，只支持部分协议的少量配置，推荐使用，欢迎pr</li>
                     </ol>
                 </div>
@@ -587,7 +588,8 @@
                 <div class="hint">
                     <ol>
                         <li>不同的配置模板，生成的订阅文件不同</li>
-                        <li>某版配置模板源码：https://github.com/ACL4SSR/ACL4SSR/tree/master/Clash/config</li>
+                        <li>某版配置模板源码：<a href="https://github.com/ACL4SSR/ACL4SSR/tree/master/Clash/config"
+                                target="_blank">ACL4SSR/ACL4SSR</a></li>
                         <li>本项目中简版订阅转换服务，忽略此项</li>
                     </ol>
                 </div>
