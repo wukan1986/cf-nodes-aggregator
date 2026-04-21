@@ -564,7 +564,7 @@ async function handle_s(url, request, env) {
 	if (request.method === 'GET') {
 		const index = data.findIndex(item => item.pathname === pathname);
 		if (index === -1) {
-			return { error: 'Link not found', status: 404 };
+			return new Response('Link not found', { status: 404 });
 		}
 
 		const item = data[index];
@@ -595,7 +595,7 @@ async function handle_s(url, request, env) {
 	}
 	const index = data.findIndex(item => item.pathname === pathname);
 	if (index === -1) {
-		return { error: 'Link not found', status: 404 };
+		return new Response('Link not found', { status: 404 });
 	}
 
 	if (request.method === 'PUT') {
