@@ -569,27 +569,8 @@
 
 <body>
     <div class="container">
-        <!-- 添加使用指南 -->
-        <div class="guide">
-            <h2><i class="fas fa-info-circle"></i> 使用指南</h2>
-            <div class="guide-content">
-                <div class="guide-item">
-                    <h3><span class="type-text">文本</span> <i class="fas fa-file-alt"></i></h3>
-                    <p>直接返回内容中的文本内容。适合用于分享纯文本信息，如说明、代码片段、联系方式等。</p>
-                </div>
-                <div class="guide-item">
-                    <h3><span class="type-redirect">跳转</span> <i class="fas fa-external-link-alt"></i></h3>
-                    <p>由浏览器进行307跳转到目标地址。<strong>注意：</strong>部分软件不支持307跳转，此时请选择"代理"类型。</p>
-                </div>
-                <div class="guide-item">
-                    <h3><span class="type-proxy">代理</span> <i class="fas fa-share"></i></h3>
-                    <p>由服务器爬取目标页面内容并转发给用户。适合需要获取远程内容的场景，兼容性好。速度略慢</p>
-                </div>
-            </div>
-        </div>
         <h1>链接管理器</h1>
         <p class="subtitle">管理您的短链接，支持文本、跳转和代理三种类型。⚠ 注意：误操作变更了链接，不要保存，重新加载即可</p>
-
         <div class="controls">
             <div class="controls-left">
                 <input type="text" id="apiKeyInput" class="api-input" placeholder="输入API_KEY" />
@@ -635,6 +616,24 @@
                 </button>
             </div>
         </div>
+        <!-- 添加使用指南 -->
+        <div class="guide">
+            <h2><i class="fas fa-info-circle"></i> 使用指南</h2>
+            <div class="guide-content">
+                <div class="guide-item">
+                    <h3><span class="type-text">文本</span> <i class="fas fa-file-alt"></i></h3>
+                    <p>直接返回内容中的文本内容。适合用于分享纯文本信息，如说明、代码片段、联系方式等。</p>
+                </div>
+                <div class="guide-item">
+                    <h3><span class="type-redirect">跳转</span> <i class="fas fa-external-link-alt"></i></h3>
+                    <p>由浏览器进行307跳转到目标地址。<strong>注意：</strong>部分软件不支持307跳转，此时请选择"代理"类型。</p>
+                </div>
+                <div class="guide-item">
+                    <h3><span class="type-proxy">代理</span> <i class="fas fa-share"></i></h3>
+                    <p>由服务器爬取目标页面内容并转发给用户。适合需要获取远程内容的场景，兼容性好。速度略慢</p>
+                </div>
+            </div>
+        </div>
         <!-- 添加 API 操作说明 (可折叠) -->
         <div class="api-guide">
             <div class="api-guide-header" onclick="toggleApiGuide()">
@@ -646,7 +645,7 @@
                     <h3><i class="fas fa-edit"></i> 更新单个链接</h3>
                     <p>您可以通过 API 直接更新单个链接的内容和类型，而无需通过网页界面。</p>
 
-                    <h4>1. 使用文件内容只更新 note (内容)</h4>
+                    <h4>1. 使用文件内容只更新 note 字段</h4>
                     <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/abc123`</span>" \
                         -H "Authorization: Bearer <span class="param">API_KEY</span>" \
                         -H "Content-Type: text/plain" \
