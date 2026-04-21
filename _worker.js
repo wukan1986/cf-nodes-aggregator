@@ -550,7 +550,7 @@ async function handle_link_edit(url, request, env) {
 	}
 }
 
-async function handle_s(url, env) {
+async function handle_s(url, request, env) {
 	const STORAGE = env.KV;
 	if (!STORAGE) return new Response('No KV storage available', { status: 500 });
 	const data = await STORAGE.get('link.json', { type: 'json' });
@@ -559,31 +559,90 @@ async function handle_s(url, env) {
 		return new Response('No data found', { status: 404 });
 	}
 
-	// 查找匹配的链接
-	for (const [key, item] of Object.entries(data)) {
-		if (item.pathname === url.pathname) {
-			if (item.type === '文本') {
-				// 直接返回 note 内容
-				return new Response(item.note || '', { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
-			} else if (item.type === '转发') {
-				// 转发到 link 的内容
-				try {
-					const response = await fetch(item.note, { signal: AbortSignal.timeout(25000) });
-					return response;
-				} catch (error) {
-					return new Response(`Forward failed: ${error.message}`, { status: 500 });
-				}
-			} else if (item.type === '跳转') {
-				// 307 跳转到 link
-				return new Response(null, { status: 307, headers: { 'Location': item.note } });
-			} else {
-				return new Response(`Unknown type: ${item.type}`, { status: 400 });
+	const pathname = url.pathname;
+
+	if (request.method === 'GET') {
+		const index = data.findIndex(item => item.pathname === pathname);
+		if (index === -1) {
+			return { error: 'Link not found', status: 404 };
+		}
+
+		const item = data[index];
+		if (item.type === 'text') {
+			// 直接返回 note 内容
+			return new Response(item.note || '', { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+		} else if (item.type === 'proxy') {
+			// 转发到 link 的内容
+			try {
+				return await fetch(item.note, { signal: AbortSignal.timeout(25000) });
+			} catch (error) {
+				return new Response(`Prxoy failed: ${error.message}`, { status: 500 });
 			}
+		} else if (item.type === 'redirect') {
+			// 307 跳转到 link
+			return new Response(null, { status: 307, headers: { 'Location': item.note } });
+		} else {
+			return new Response(`Unknown type: ${item.type}`, { status: 400 });
 		}
 	}
 
-	// 没有找到匹配的链接
-	return new Response('Link not found', { status: 404 });
+	const auth = await apiKeyAuth(request, env);
+	if (!auth.authenticated) {
+		return new Response('Unauthorized', {
+			status: 401,
+			headers: { 'WWW-Authenticate': 'Bearer' }
+		});
+	}
+	const index = data.findIndex(item => item.pathname === pathname);
+	if (index === -1) {
+		return { error: 'Link not found', status: 404 };
+	}
+
+	if (request.method === 'PUT') {
+		// 根据 Content-Type 处理不同格式
+		const contentType = request.headers.get('Content-Type') || '';
+
+		if (contentType.includes('application/json')) {
+			const text = await request.text();
+			console.log('Raw body:', text);
+			let updateData;
+			try {
+				updateData = JSON.parse(text);
+				data[index] = {
+					...data[index],
+					...updateData // 可以把不喜欢的链接也给换了
+				};
+			} catch (error) {
+				return new Response('Invalid JSON: ' + error, { status: 400 });
+			}
+		} else if (contentType.includes('text/plain')) {
+			// 纯文本格式 - 直接作为 note 内容
+			const textContent = await request.text();
+			data[index] = {
+				...data[index],
+				note: textContent,
+			};
+		} else {
+			return new Response('Unsupported Content-Type', { status: 400 });
+		}
+
+		// 保存回 KV
+		await STORAGE.put('link.json', JSON.stringify(data, null, 0));
+
+		return new Response(
+			JSON.stringify({
+				success: true,
+				message: 'Updated successfully',
+				pathname: url.pathname
+			}),
+			{
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			}
+		);
+	}
+	// 其他请求方法
+	return new Response('Method not allowed', { status: 405 });
 }
 
 async function apiKeyAuth(request, env) {
@@ -1013,7 +1072,7 @@ export default {
 		const url = new URL(request.url);
 
 		if (url.pathname.startsWith('/s/')) {
-			return await handle_s(url, env);
+			return await handle_s(url, request, env);
 		}
 		// env.KV.delete("link.json");
 

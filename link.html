@@ -82,7 +82,7 @@
             font-weight: 600;
         }
 
-        .type-forward {
+        .type-proxy {
             color: #9b59b6;
             font-weight: 600;
         }
@@ -167,6 +167,14 @@
 
         .btn-load:hover {
             background: #27ae60;
+        }
+
+        .btn-backup {
+            background: #1abc9c;
+        }
+
+        .btn-backup:hover {
+            background: #16a085;
         }
 
         .btn-save-all {
@@ -261,17 +269,18 @@
 
         th:nth-child(1) {
             /* 链接列 */
-            width: 25%;
+            width: 15%;
+            min-width: 80px;
         }
 
         th:nth-child(2) {
             /* 内容列 */
-            width: 65%;
+            width: 70%;
         }
 
         th:nth-child(3) {
             /* 类型列 */
-            width: 10%;
+            width: 15%;
         }
 
         tbody tr {
@@ -288,8 +297,8 @@
         }
 
         .link-cell {
-            width: 20%;
-            min-width: 150px;
+            width: 10%;
+            min-width: 100px;
         }
 
         .link {
@@ -329,7 +338,7 @@
             border-radius: 6px;
             font-size: 1rem;
             resize: vertical;
-            min-height: 80px;
+            min-height: 100px;
             transition: border-color 0.3s;
         }
 
@@ -339,7 +348,7 @@
         }
 
         .select-cell {
-            width: 15%;
+            width: 10%;
             min-width: 100px;
         }
 
@@ -361,6 +370,97 @@
             display: flex;
             justify-content: center;
             margin-top: 20px;
+        }
+
+        /* 新增：API 操作说明区域样式 */
+        .api-guide {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #2ecc71;
+        }
+
+        .api-guide h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .api-guide h2 i {
+            color: #2ecc71;
+        }
+
+        .api-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            margin-bottom: 20px;
+        }
+
+        .api-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .api-section h3 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .api-section h3 i {
+            color: #3498db;
+        }
+
+        .api-code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin: 10px 0 15px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .api-note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-top: 15px;
+        }
+
+        .api-note i {
+            color: #f39c12;
+            margin-right: 8px;
+        }
+
+        .param {
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        .value {
+            color: #2ecc71;
+        }
+
+        .comment {
+            color: #95a5a6;
         }
 
 
@@ -414,6 +514,15 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .api-guide {
+                padding: 20px 15px;
+            }
+
+            .api-code {
+                font-size: 0.85rem;
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -426,27 +535,30 @@
             <div class="guide-content">
                 <div class="guide-item">
                     <h3><span class="type-text">文本</span> <i class="fas fa-file-alt"></i></h3>
-                    <p>访问网页直接返回内容中的文本内容。适合用于分享纯文本信息，如说明、代码片段、联系方式等。</p>
-                </div>
-                <div class="guide-item">
-                    <h3><span class="type-forward">转发</span> <i class="fas fa-share"></i></h3>
-                    <p>访问网页时由服务器爬取目标页面内容并转发给用户。适合需要获取远程内容的场景，兼容性好。</p>
+                    <p>直接返回内容中的文本内容。适合用于分享纯文本信息，如说明、代码片段、联系方式等。</p>
                 </div>
                 <div class="guide-item">
                     <h3><span class="type-redirect">跳转</span> <i class="fas fa-external-link-alt"></i></h3>
-                    <p>访问网页时由浏览器进行307跳转到目标地址。<strong>注意：</strong>部分软件不支持307跳转，此时请选择"转发"类型。</p>
+                    <p>由浏览器进行307跳转到目标地址。<strong>注意：</strong>部分软件不支持307跳转，此时请选择"代理"类型。</p>
+                </div>
+                <div class="guide-item">
+                    <h3><span class="type-proxy">代理</span> <i class="fas fa-share"></i></h3>
+                    <p>由服务器爬取目标页面内容并转发给用户。适合需要获取远程内容的场景，兼容性好。速度略慢</p>
                 </div>
             </div>
         </div>
-
         <h1>链接管理器</h1>
-        <p class="subtitle">管理您的短链接，支持文本、转发和跳转三种类型。⚠ 注意：误操作变更了链接，不要保存，重新加载即可</p>
+        <p class="subtitle">管理您的短链接，支持文本、跳转和代理三种类型。⚠ 注意：误操作变更了链接，不要保存，重新加载即可</p>
 
         <div class="controls">
             <div class="controls-left">
                 <input type="text" id="apiKeyInput" class="api-input" placeholder="输入API_KEY" />
                 <button class="btn btn-load" id="loadBtn">
                     <i class="fas fa-cloud-download-alt"></i> 加载
+                </button>
+                <!-- 新增的下载备份按钮 -->
+                <button class="btn btn-backup" id="backupBtn">
+                    <i class="fas fa-file-download"></i> 下载备份
                 </button>
                 <div class="link-count">
                     链接数: <span id="linkCount">3</span>
@@ -483,6 +595,72 @@
                 </button>
             </div>
         </div>
+        <!-- 添加 API 操作说明 -->
+        <div class="api-guide">
+            <h2><i class="fas fa-code"></i> API 操作说明</h2>
+
+            <div class="api-section">
+                <h3><i class="fas fa-edit"></i> 更新单个链接</h3>
+                <p>您可以通过 API 直接更新单个链接的内容和类型，而无需通过网页界面。</p>
+
+                <h4>1. 使用文件内容只更新 note (内容)</h4>
+                <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/CQ9924VdjN</span>" \
+                    -H "Authorization: Bearer <span class="param">API_KEY</span>" \
+                    -H "Content-Type: text/plain" \
+                    --data-binary "@/path/to/file.txt"</div>
+
+                <h4>2. 使用 JSON 更新请求</h4>
+                <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/CQ9924VdjN</span>" \
+                    -H "Authorization: Bearer <span class="param">API_KEY</span>" \
+                    -H "Content-Type: application/json" \
+                    -d '{"note": "只更新note"}'</div>
+
+                <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/CQ9924VdjN</span>" \
+                    -H "Authorization: Bearer <span class="param">API_KEY</span>" \
+                    -H "Content-Type: application/json" \
+                    -d '{"note": "还更新type", "type": "redirect"}'</div>
+
+                <div class="api-note">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>注意事项：</strong>
+                    <ul style="margin-top: 8px; padding-left: 20px;">
+                        <li>将 <span class="value">https://your-domain.com</span> 替换为您的实际域名</li>
+                        <li>将 <span class="value">/s/CQ9924VdjN</span> 替换为您要更新的具体链接路径</li>
+                        <li>将 <span class="param">API_KEY</span> 替换为您的实际 API 密钥</li>
+                        <li>JSON 请求支持更新 <span class="value">note</span> 和 <span class="value">type</span> 字段</li>
+                        <li><span class="value">type</span> 字段可选值: <span class="value">text</span>, <span
+                                class="value">redirect</span>, <span class="value">proxy</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <h3><i class="fas fa-database"></i> 批量操作 API</h3>
+                <p>本网页界面使用了以下 API 进行批量操作：</p>
+
+                <h4>获取所有链接 (GET)</h4>
+                <div class="api-code">curl -X GET "<span class="value">https://your-domain.com/link/edit</span>" \
+                    -H "Authorization: Bearer <span class="param">API_KEY</span>"</div>
+
+                <h4>保存所有链接 (POST)</h4>
+                <div class="api-code">curl -X POST "<span class="value">https://your-domain.com/link/edit</span>" \
+                    -H "Authorization: Bearer <span class="param">API_KEY</span>" \
+                    -H "Content-Type: application/json" \
+                    --data-binary "@/path/to/file.json"</div>
+
+                <div class="api-note">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>关于 POST 请求的数据文件：</strong>
+                    <ul style="margin-top: 8px; padding-left: 20px;">
+                        <li><span class="value">file.json</span> 应包含所有链接数据的 JSON 数组</li>
+                        <li>JSON
+                            格式示例：<code>[{"pathname": "/s/abc123", "note": "https://example.com", "type": "redirect"}]</code>
+                        </li>
+                        <li>可以通过本页面的"下载备份"功能获取当前的 JSON 数据格式</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -496,7 +674,7 @@
             for (let i = 0; i < 10; i++) {
                 randomString += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            return window.location.origin + `/s/${randomString}`;
+            return `/s/${randomString}`;
         }
 
         // 显示状态消息
@@ -522,6 +700,86 @@
             setTimeout(() => {
                 statusElement.classList.remove('show');
             }, hideTime);
+        }
+
+        // 下载数据为JSON文件
+        async function downloadBackup() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                showStatus('请先输入API_KEY', 'error');
+                return false;
+            }
+
+            showStatus('正在从服务器获取数据并生成备份...', 'info');
+
+            // 禁用下载按钮避免重复点击
+            const backupBtn = document.getElementById('backupBtn');
+            backupBtn.disabled = true;
+            backupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 下载中...';
+
+            try {
+                const response = await fetch('/link/edit', {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('API_KEY无效或已过期');
+                    } else if (response.status === 404) {
+                        throw new Error('服务器未找到数据，请先保存数据到服务器');
+                    } else if (response.status === 403) {
+                        throw new Error('API_KEY权限不足');
+                    } else {
+                        throw new Error(`HTTP错误! 状态码: ${response.status}`);
+                    }
+                }
+
+                const remoteData = await response.json();
+                console.log('从服务器获取的数据:', remoteData);
+
+                if (!remoteData || !Array.isArray(remoteData) || remoteData.length === 0) {
+                    showStatus('服务器中没有数据可下载', 'warning');
+                    return false;
+                }
+
+                // 创建JSON字符串
+                const jsonData = JSON.stringify(remoteData, null, 2);
+
+                // 创建Blob对象
+                const blob = new Blob([jsonData], { type: 'application/json' });
+
+                // 创建下载链接
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // 生成文件名（包含当前时间）
+                const now = new Date();
+                const timestamp = now.toISOString().replace(/[:.]/g, '-').split('.')[0];
+                a.download = `links-backup-${timestamp}.json`;
+
+                // 触发下载
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // 释放URL对象
+                URL.revokeObjectURL(url);
+
+                showStatus(`已成功下载备份文件，包含 ${remoteData.length} 条链接数据`, 'success');
+                return true;
+
+            } catch (error) {
+                console.error('下载备份失败:', error);
+                showStatus(`下载失败: ${error.message}`, 'error');
+                return false;
+            } finally {
+                // 重新启用下载按钮
+                backupBtn.disabled = false;
+                backupBtn.innerHTML = '<i class="fas fa-file-download"></i> 下载备份';
+            }
         }
 
         // 从服务器加载数据
@@ -631,7 +889,7 @@
 
         // 复制链接到剪贴板
         function copyToClipboard(linkElement, noticeElement) {
-            const link = linkElement.textContent;
+            const link = window.location.origin + linkElement.textContent;
             navigator.clipboard.writeText(link).then(() => {
                 noticeElement.style.display = 'block';
                 noticeElement.textContent = '链接已复制到剪贴板！';
@@ -670,11 +928,11 @@
 
             rows.forEach(row => {
                 const rowId = row.id.split('-')[1];
-                const link = document.querySelector(`#link-${rowId}`).textContent.trim();
+                const pathname = document.querySelector(`#link-${rowId}`).textContent.trim();
                 const note = document.querySelector(`#note-${rowId}`).value.trim();
                 const type = document.querySelector(`#type-${rowId}`).value.trim();
 
-                allData.push({ link, note, type, pathname: new URL(link).pathname });  // 改为push到数组
+                allData.push({ pathname, note, type });  // 改为push到数组
             });
             console.log('保存的数据:', allData);
 
@@ -758,9 +1016,9 @@
                 }
             }
 
-            const link = linkData ? linkData.link : generateRandomLink();
+            const pathname = linkData ? linkData.pathname : generateRandomLink();
             const note = linkData ? linkData.note : '';
-            const type = linkData ? linkData.type : '文本';
+            const type = linkData ? linkData.type : 'text';
 
             const newRow = document.createElement('tr');
             newRow.id = `row-${rowId}`;
@@ -768,7 +1026,7 @@
 
             newRow.innerHTML = `
             <td class="link-cell">
-                <a href="#" class="link" id="link-${rowId}">${link}</a>
+                <a href="#" class="link" id="link-${rowId}">${pathname}</a>
                 <div class="copied-notice" id="notice-${rowId}"></div>
             </td>
             <td class="textarea-cell">
@@ -776,9 +1034,9 @@
             </td>
             <td class="select-cell">
                 <select id="type-${rowId}">
-                    <option value="文本" ${type === '文本' ? 'selected' : ''}>文本</option>
-                    <option value="转发" ${type === '转发' ? 'selected' : ''}>转发</option>
-                    <option value="跳转" ${type === '跳转' ? 'selected' : ''}>跳转</option>
+                    <option value="text" ${type === 'text' ? 'selected' : ''}>文本</option>
+                    <option value="redirect" ${type === 'redirect' ? 'selected' : ''}>跳转</option>
+                    <option value="proxy" ${type === 'proxy' ? 'selected' : ''}>代理</option>
                 </select>
             </td>
         `;
@@ -835,6 +1093,9 @@
 
             // 加载按钮事件
             document.getElementById('loadBtn').addEventListener('click', loadDataFromServer);
+
+            // 下载备份按钮事件
+            document.getElementById('backupBtn').addEventListener('click', downloadBackup);
 
             // 保存所有按钮事件
             document.getElementById('saveAllBtn').addEventListener('click', saveAllRows);
