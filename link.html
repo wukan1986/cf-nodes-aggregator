@@ -463,6 +463,46 @@
             color: #95a5a6;
         }
 
+        /* 新增：API 折叠相关样式 */
+        .api-guide-header {
+            cursor: pointer;
+            padding: 10px 0;
+            border-bottom: 2px solid #e1e8ed;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .api-guide-header:hover {
+            background-color: #f8f9fa;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .api-guide-header h2 {
+            margin-bottom: 0;
+            color: #2c3e50;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .api-guide-header h2 span {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            transition: transform 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .api-guide-header.active h2 span {
+            transform: rotate(180deg);
+        }
+
+        .api-guide-header.active {
+            border-bottom-color: #2ecc71;
+        }
+
 
         @media (max-width: 768px) {
 
@@ -595,69 +635,73 @@
                 </button>
             </div>
         </div>
-        <!-- 添加 API 操作说明 -->
+        <!-- 添加 API 操作说明 (可折叠) -->
         <div class="api-guide">
-            <h2><i class="fas fa-code"></i> API 操作说明</h2>
-
-            <div class="api-section">
-                <h3><i class="fas fa-edit"></i> 更新单个链接</h3>
-                <p>您可以通过 API 直接更新单个链接的内容和类型，而无需通过网页界面。</p>
-
-                <h4>1. 使用文件内容只更新 note (内容)</h4>
-                <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/CQ9924VdjN</span>" \
-                    -H "Authorization: Bearer <span class="param">API_KEY</span>" \
-                    -H "Content-Type: text/plain" \
-                    --data-binary "@/path/to/file.txt"</div>
-
-                <h4>2. 使用 JSON 更新请求</h4>
-                <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/CQ9924VdjN</span>" \
-                    -H "Authorization: Bearer <span class="param">API_KEY</span>" \
-                    -H "Content-Type: application/json" \
-                    -d '{"note": "只更新note"}'</div>
-
-                <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/CQ9924VdjN</span>" \
-                    -H "Authorization: Bearer <span class="param">API_KEY</span>" \
-                    -H "Content-Type: application/json" \
-                    -d '{"note": "还更新type", "type": "redirect"}'</div>
-
-                <div class="api-note">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>注意事项：</strong>
-                    <ul style="margin-top: 8px; padding-left: 20px;">
-                        <li>将 <span class="value">https://your-domain.com</span> 替换为您的实际域名</li>
-                        <li>将 <span class="value">/s/CQ9924VdjN</span> 替换为您要更新的具体链接路径</li>
-                        <li>将 <span class="param">API_KEY</span> 替换为您的实际 API 密钥</li>
-                        <li>JSON 请求支持更新 <span class="value">note</span> 和 <span class="value">type</span> 字段</li>
-                        <li><span class="value">type</span> 字段可选值: <span class="value">text</span>, <span
-                                class="value">redirect</span>, <span class="value">proxy</span></li>
-                    </ul>
-                </div>
+            <div class="api-guide-header" onclick="toggleApiGuide()">
+                <h2><i class="fas fa-code"></i> API 操作说明 <span id="apiGuideToggle">▼</span></h2>
             </div>
 
-            <div class="api-section">
-                <h3><i class="fas fa-database"></i> 批量操作 API</h3>
-                <p>本网页界面使用了以下 API 进行批量操作：</p>
+            <div id="apiGuideContent" style="display: none;">
+                <div class="api-section">
+                    <h3><i class="fas fa-edit"></i> 更新单个链接</h3>
+                    <p>您可以通过 API 直接更新单个链接的内容和类型，而无需通过网页界面。</p>
 
-                <h4>获取所有链接 (GET)</h4>
-                <div class="api-code">curl -X GET "<span class="value">https://your-domain.com/link/edit</span>" \
-                    -H "Authorization: Bearer <span class="param">API_KEY</span>"</div>
+                    <h4>1. 使用文件内容只更新 note (内容)</h4>
+                    <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/abc123`</span>" \
+                        -H "Authorization: Bearer <span class="param">API_KEY</span>" \
+                        -H "Content-Type: text/plain" \
+                        --data-binary "@/path/to/file.txt"</div>
 
-                <h4>保存所有链接 (POST)</h4>
-                <div class="api-code">curl -X POST "<span class="value">https://your-domain.com/link/edit</span>" \
-                    -H "Authorization: Bearer <span class="param">API_KEY</span>" \
-                    -H "Content-Type: application/json" \
-                    --data-binary "@/path/to/file.json"</div>
+                    <h4>2. 使用 JSON 更新请求</h4>
+                    <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/abc123</span>" \
+                        -H "Authorization: Bearer <span class="param">API_KEY</span>" \
+                        -H "Content-Type: application/json" \
+                        -d '{"note": "只更新note"}'</div>
 
-                <div class="api-note">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>关于 POST 请求的数据文件：</strong>
-                    <ul style="margin-top: 8px; padding-left: 20px;">
-                        <li><span class="value">file.json</span> 应包含所有链接数据的 JSON 数组</li>
-                        <li>JSON
-                            格式示例：<code>[{"pathname": "/s/abc123", "note": "https://example.com", "type": "redirect"}]</code>
-                        </li>
-                        <li>可以通过本页面的"下载备份"功能获取当前的 JSON 数据格式</li>
-                    </ul>
+                    <div class="api-code">curl -X PUT "<span class="value">https://your-domain.com/s/abc123</span>" \
+                        -H "Authorization: Bearer <span class="param">API_KEY</span>" \
+                        -H "Content-Type: application/json" \
+                        -d '{"note": "还更新type", "type": "redirect"}'</div>
+
+                    <div class="api-note">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>注意事项：</strong>
+                        <ul style="margin-top: 8px; padding-left: 20px;">
+                            <li>将 <span class="value">https://your-domain.com</span> 替换为您的实际域名</li>
+                            <li>将 <span class="value">/s/abc123</span> 替换为您要更新的具体链接路径</li>
+                            <li>将 <span class="param">API_KEY</span> 替换为您的实际 API 密钥</li>
+                            <li>JSON 请求支持更新 <span class="value">note</span> 和 <span class="value">type</span> 字段</li>
+                            <li><span class="value">type</span> 字段可选值: <span class="value">text</span>, <span
+                                    class="value">redirect</span>, <span class="value">proxy</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="api-section">
+                    <h3><i class="fas fa-database"></i> 批量操作 API</h3>
+                    <p>本网页界面使用了以下 API 进行批量操作：</p>
+
+                    <h4>获取所有链接 (GET)</h4>
+                    <div class="api-code">curl -X GET "<span class="value">https://your-domain.com/link/edit</span>" \
+                        -H "Authorization: Bearer <span class="param">API_KEY</span>"</div>
+
+                    <h4>保存所有链接 (POST)</h4>
+                    <div class="api-code">curl -X POST "<span class="value">https://your-domain.com/link/edit</span>" \
+                        -H "Authorization: Bearer <span class="param">API_KEY</span>" \
+                        -H "Content-Type: application/json" \
+                        --data-binary "@/path/to/file.json"</div>
+
+                    <div class="api-note">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>关于 POST 请求的数据文件：</strong>
+                        <ul style="margin-top: 8px; padding-left: 20px;">
+                            <li><span class="value">file.json</span> 应包含所有链接数据的 JSON 数组</li>
+                            <li>JSON
+                                格式示例：<code>[{"pathname": "/s/abc123", "note": "https://example.com", "type": "redirect"}]</code>
+                            </li>
+                            <li>可以通过本页面的"下载备份"功能获取当前的 JSON 数据格式</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1083,6 +1127,23 @@
             // 添加3行初始数据
             for (let i = 1; i <= 3; i++) {
                 addRow(`row${i}`);
+            }
+        }
+
+        // API 折叠功能
+        function toggleApiGuide() {
+            const content = document.getElementById('apiGuideContent');
+            const toggleIcon = document.getElementById('apiGuideToggle');
+            const header = document.querySelector('.api-guide-header');
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggleIcon.textContent = '▲';
+                header.classList.add('active');
+            } else {
+                content.style.display = 'none';
+                toggleIcon.textContent = '▼';
+                header.classList.remove('active');
             }
         }
 
