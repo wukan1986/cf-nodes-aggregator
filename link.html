@@ -82,7 +82,7 @@
             font-weight: 600;
         }
 
-        .type-proxy {
+        .type-concat {
             color: #9b59b6;
             font-weight: 600;
         }
@@ -626,11 +626,14 @@
                 </div>
                 <div class="guide-item">
                     <h3><span class="type-redirect">跳转</span> <i class="fas fa-external-link-alt"></i></h3>
-                    <p>由浏览器进行307跳转到目标地址。<strong>注意：</strong>部分软件不支持307跳转，此时请选择"代理"类型。</p>
+                    <p>由浏览器进行307跳转到目标地址。<strong>注意：</strong>部分软件不支持307跳转，此时请选择"拼接"类型。</p>
+                    <p>链接后可以接`#`中文备注说明，不影响跳转</p>
                 </div>
                 <div class="guide-item">
-                    <h3><span class="type-proxy">代理</span> <i class="fas fa-share"></i></h3>
-                    <p>由服务器爬取目标页面内容并转发给用户。适合需要获取远程内容的场景，兼容性好。速度略慢</p>
+                    <h3><span class="type-concat">拼接</span> <i class="fas fa-share"></i></h3>
+                    <p>由服务器爬取多个目标页面内容合并后发给用户。适合需要获取远程内容的场景</p>
+                    <p>以`#`开头的行可以中文备注说明，不会被爬取</p>
+                    <p>爬取时支持`_ua`参数</p>
                 </div>
             </div>
         </div>
@@ -671,7 +674,7 @@
                             <li>将 <span class="param">API_KEY</span> 替换为您的实际 API 密钥</li>
                             <li>JSON 请求支持更新 <span class="value">note</span> 和 <span class="value">type</span> 字段</li>
                             <li><span class="value">type</span> 字段可选值: <span class="value">text</span>, <span
-                                    class="value">redirect</span>, <span class="value">proxy</span></li>
+                                    class="value">redirect</span>, <span class="value">concat</span></li>
                         </ul>
                     </div>
                 </div>
@@ -1079,7 +1082,7 @@
                 <select id="type-${rowId}">
                     <option value="text" ${type === 'text' ? 'selected' : ''}>文本</option>
                     <option value="redirect" ${type === 'redirect' ? 'selected' : ''}>跳转</option>
-                    <option value="proxy" ${type === 'proxy' ? 'selected' : ''}>代理</option>
+                    <option value="concat" ${type === 'concat' ? 'selected' : ''}>拼接</option>
                 </select>
             </td>
         `;

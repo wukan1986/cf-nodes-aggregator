@@ -467,6 +467,7 @@
                     <ol>
                         <li>⚠ 必填</li>
                         <li>目标链接的内容将先尝试Base64解码</li>
+                        <li>爬取时支持`_ua`参数</li>
                         <li>必须是vless/trojan/ss节点的列表。优选时将扩增节点数量，替换节点中的hostname:port#hash</li>
                         <li>各机场的v2ray订阅链接本质也是节点链接</li>
                         <li>节点文件可以托管到在线平台。如：<a href="https://gist.github.com" target="_blank">GitHub Gist</a></li>
@@ -494,6 +495,7 @@
                     <ol>
                         <li>⚠ 选填。留空则"nodes"将原样返回，不扩展优选节点</li>
                         <li>目标链接的内容将先尝试Base64解码</li>
+                        <li>爬取时支持`_ua`参数</li>
                         <li>如果是vless/trojan/ss节点的列表，将从中提取节点中的hostname:port#hash供优选使用</li>
                         <li>如果是域名列表，将从中提取domain:port#hash供优选使用。无法限定IP地区，但节点稳定性高，推荐使用</li>
                         <li>如果是IP列表，将从中提取ip:port#hash供优选使用。如果hash提供了地区，就可以选，但节点稳定性低，建议仅限制地区时使用</li>
@@ -1033,7 +1035,6 @@
                 { value: 'https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/best_domains.txt', textContent: '优选域名' },
                 { value: 'https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt', textContent: 'hc990275优选IP(地区分组)' },
                 { value: 'https://raw.githubusercontent.com/xinyitang3/rules/main/ip.txt', textContent: 'xinyitang3优选IP(地区分组)' },
-                { value: 'https://zip.cm.edu.kg/all.txt', textContent: '全IP(按IP增序)' },
                 { value: 'https://sub.cmliussss.net/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: 'CM优选订阅' },
                 { value: 'https://owo.o00o.ooo/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: 'Moist_R 优选' },
                 { value: 'https://cm.soso.edu.kg/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '天诚 优选' },
@@ -1042,6 +1043,7 @@
                 { value: 'https://sub.mot.cloudns.biz/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: 'Kristi 优选' },
                 { value: 'https://cfsub.cfcdn.xx.kg/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '青云志 优选' },
                 { value: 'https://sub.lzjbaby.com/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000', textContent: '辣子鸡 优选' },
+                { value: 'https://zip.cm.edu.kg/all.txt', textContent: '全IP(按IP增序)' },
             ];
             addOptionsToDatalist('hostnames_list', options);
 
