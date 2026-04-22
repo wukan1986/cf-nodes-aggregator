@@ -681,11 +681,11 @@
                     <p>本网页界面使用了以下 API 进行批量操作：</p>
 
                     <h4>获取所有链接 (GET)</h4>
-                    <div class="api-code">curl -X GET "<span class="value">https://your-domain.com/link/edit</span>" \
+                    <div class="api-code">curl -X GET "<span class="value">https://your-domain.com/link/api</span>" \
                         -H "Authorization: Bearer <span class="param">API_KEY</span>"</div>
 
                     <h4>保存所有链接 (POST)</h4>
-                    <div class="api-code">curl -X POST "<span class="value">https://your-domain.com/link/edit</span>" \
+                    <div class="api-code">curl -X POST "<span class="value">https://your-domain.com/link/api</span>" \
                         -H "Authorization: Bearer <span class="param">API_KEY</span>" \
                         -H "Content-Type: application/json" \
                         --data-binary "@/path/to/file.json"</div>
@@ -761,7 +761,7 @@
             backupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 下载中...';
 
             try {
-                const response = await fetch('/link/edit', {
+                const response = await fetch('/link/api', {
                     headers: {
                         'Authorization': `Bearer ${apiKey}`
                     }
@@ -841,7 +841,7 @@
             loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
 
             try {
-                const response = await fetch('/link/edit', {
+                const response = await fetch('/link/api', {
                     headers: {
                         'Authorization': `Bearer ${apiKey}`
                     }
@@ -989,12 +989,12 @@
 
             try {
                 console.log('正在发送数据到服务器:', {
-                    url: '/link/edit',
+                    url: '/link/api',
                     apiKey: apiKey ? '已设置' : '未设置',
                     dataCount: allData.length
                 });
 
-                const response = await fetch('/link/edit', {
+                const response = await fetch('/link/api', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

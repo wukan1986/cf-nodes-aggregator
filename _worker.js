@@ -382,32 +382,6 @@ function add_ech_to_singbox(jsonString) {
 	return JSON.stringify(config, null, 2);
 }
 
-// async function handle_clash(url) {
-// 	const _url = url.searchParams.get('url');
-// 	// 订阅转换ech丢失，需要后期添加
-// 	try {
-// 		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(20000) });
-// 		return new Response(add_ech_to_clash(content), { headers: { 'Content-Type': 'text/yaml; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
-// 	}
-// 	catch (error) {
-// 		console.log(error);
-// 		return new Response(error, { headers: { status: 500 } });
-// 	}
-// }
-
-// async function handle_singbox(url) {
-// 	const _url = url.searchParams.get('url');
-// 	// 订阅转换ech丢失，需要后期添加
-// 	try {
-// 		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(20000) });
-// 		return new Response(add_ech_to_singbox(content), { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
-// 	}
-// 	catch (error) {
-// 		console.log(error);
-// 		return new Response(error, { headers: { status: 500 } });
-// 	}
-// }
-
 function zip(...arrays) {
 	const length = Math.min(...arrays.map(arr => arr.length));
 	return Array.from({ length }, (_, i) => arrays.map(arr => arr[i]));
@@ -525,7 +499,7 @@ async function handle_link(url) {
 	}
 }
 
-async function handle_link_edit(url, request, env) {
+async function handle_link_api(url, request, env) {
 	const auth = await apiKeyAuth(request, env);
 	if (!auth.authenticated) {
 		return new Response('Unauthorized', {
@@ -1105,16 +1079,12 @@ export default {
 				return await handle_v2ray(url, request, false);
 			case '/base64':
 				return await handle_v2ray(url, request, true);
-			// case '/clash':
-			// 	return await handle_clash(url);
-			// case '/singbox':
-			// 	return await handle_singbox(url);
 			case '/home':
 				return await handle_home(url);
 			case '/link':
 				return await handle_link(url);
-			case '/link/edit':
-				return await handle_link_edit(url, request, env);
+			case '/link/api':
+				return await handle_link_api(url, request, env);
 			case '/sub':
 				return await handle_sub(url, request);
 
