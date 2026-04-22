@@ -44,14 +44,43 @@
 2. 访问`https://*.pages.dev/sub`，与公开的订阅转换服务参数相同，但只识别`url`、`scv`参数
 
 ## 额外功能（抓取优选信息）
-1. 例如：访问`https://*.pages.dev/extract?hostname=https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt&region=HK-JP-US&limit=10-6-10`，抓取IP信息
-2. 例如：访问`https://*.pages.dev/extract?hostname=https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/best_domains.txt&limit=20`，抓取域名信息
+1. 例如：访问`https://*.pages.dev/extract?hostnames=https://raw.githubusercontent.com/hc990275/yx/main/cfyxip.txt&region=HK-JP-US&limit=10-6-10`，抓取IP信息
+2. 例如：访问`https://*.pages.dev/extract?hostnames=https://raw.githubusercontent.com/wukan1986/cf-nodes-aggregator/main/best_domains.txt&limit=20`，抓取域名信息
 
 ## 额外功能（指定UA爬取）
-1. 订阅时指定`UA`，临时解决部分软件不支持自定义`UA`的场景
-2. 访问 `https://*.pages.dev/fetch?ua=clash&url=https://xxx.xxxx.de5.net/sub?token=xxxx`
-3. `ua`为指定的`User-Agent`，`url`为机场订阅地址
-4. 此功能也能解决部分订阅地址无法直接访问的的场景
+1. 订阅时指定`UA`，临时解决部分软件不支持自定义`UA`的场景，也能解决部分订阅地址无法直接访问的场景
+2. 为`url=`参数添加`_ua=clash`参数。注意：是为参数添加参数，而不是为链接添加参数。例如
+```markdown
+http://127.0.0.1:8787/fetch?url=http://httpbin.org/get?_ua=clash    # 为url参数添加参数。正确
+http://127.0.0.1:8787/fetch?url=http://httpbin.org/get&_ua=clash    # 为URL链接添加参数。错误
+```
+3. 为何这么设计？多机场聚合时，需要为每个链接单独设置`UA`。这也导致正确添加`_ua`非常麻烦
+```javascript
+const url1 = new URL('http://httpbin.org/get?token=XXXXXX');
+const url2 = new URL('http://127.0.0.1:8787/fetch');
+url1.searchParams.set('_ua', 'clash');
+
+console.log(url1.href);
+// 在链接管理，和订阅设置界面一般使用此条
+// http://httpbin.org/get?token=XXXXXX&_ua=clash
+
+url2.searchParams.set('url', url1.href);
+console.log(url2.href);
+// http://127.0.0.1:8787/fetch?url=http%3A%2F%2Fhttpbin.org%2Fget%3Ftoken%3DXXXXXX%26_ua%3Dclash
+
+```
+以上代码按需修改后，在浏览器中按`F12`,在控制台输入代码，即可看到转换后的链接。
+
+4. 目前本项目中所有`fetch`网络请求都支持添加`_ua`参数
+```markdown
+1. /fetch?url=
+2. /extract?hostnames=
+3. /v2ray?hostnames=&nodes=
+4. /base64?hostnames=&nodes=
+6. /sub?url=
+7. 链接管理器。类型为`拼接`。例如可以实现多个优选列表合并成一个
+
+```
 
 ## 我的推荐设置
 两份节点列表，一份是好友搭建的VPS节点，一份是收集的网友分享的CF节点。一般配置三个订阅

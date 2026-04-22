@@ -187,11 +187,30 @@ function cleanupSomeExpired(cache, ttl, now, maxCount) {
 	}
 }
 
+function make_url_options(url, options = {}) {
+	if (!url) return '';
+	const _url = new URL(url);
+	const _ua = _url.searchParams.get('_ua');
+	if (_ua) {
+		_url.searchParams.delete('_ua');
+		if (options.headers) {
+			options.headers = { ...options.headers, 'User-Agent': _ua };
+		}
+		else {
+			options.headers = { 'User-Agent': _ua };
+		}
+		console.log('make_url_options', _url.href, options);
+	}
+	
+	return [_url.href, options];
+}
+
 async function fetch_url(url, options = {}) {
 	if (!url) return '';
+
 	console.log('fetching', url, options);
-	const newData = await fetch(url, options).then(res => res.text());
-	return newData;
+
+	return await fetch(url, options).then(res => res.text());
 }
 
 const cached_fetch_30 = withTimeoutCache(fetch_url, { maxSize: 10, ttl: 1000 * 30 });
@@ -233,12 +252,14 @@ function 生成地址列表(addresses) {
 }
 
 async function handle_fetch(url) {
+	// 以下是有区别的
+	// http://127.0.0.1:8787/fetch?url=http://httpbin.org/get?_ua=clash
+	// http://127.0.0.1:8787/fetch?url=http://httpbin.org/get&_ua=clash
 	const targetUrl = url.searchParams.get('url');
-	const userAgent = url.searchParams.get('ua') || 'clash'; // 默认UA为clash
 	if (!targetUrl) {
 		return new Response('Missing url parameter', { status: 400 });
 	}
-	const resp = await fetch(decodeURIComponent(targetUrl), { headers: { 'User-Agent': userAgent } });
+	const resp = await fetch(...make_url_options(targetUrl, { signal: AbortSignal.timeout(15000) }));
 	return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: resp.headers });
 }
 
@@ -407,7 +428,7 @@ function parse_new_line(inputText) {
 
 async function handle_extract(url) {
 	// 5秒超时
-	let hostnames = await fetch_hostnames(url.searchParams.get('hostname'));
+	let hostnames = await fetch_hostnames(url.searchParams.get('hostnames'));
 	console.log(hostnames);
 	if (url.searchParams.get('region')) {
 		hostnames = hostnames_limit_region(group_hostnames_by_hash(hostnames), get_limit_region(url, 30));
@@ -422,7 +443,6 @@ async function handle_extract(url) {
 }
 
 async function handle_v2ray(url, request, base64) {
-	// 5秒超时
 	let hostnames = await fetch_hostnames(url.searchParams.get('hostnames'));
 	// console.log(hostnames);
 	if (url.searchParams.get('region')) {
@@ -437,7 +457,7 @@ async function handle_v2ray(url, request, base64) {
 	let nodes;
 	try {
 		// 5秒超时
-		const content = await await cached_fetch_30(url.searchParams.get('nodes'), { signal: AbortSignal.timeout(5000) });
+		const content = await await cached_fetch_30(...make_url_options(url.searchParams.get('nodes'), { signal: AbortSignal.timeout(5000) }));
 
 		const txt = /[\.:]/.test(content) ? content : atob(content);
 		nodes = parse_new_line(txt);
@@ -467,7 +487,7 @@ async function fetch_hostnames(target_url) {
 		target_url = `${target_url.replace("sub://", "https://")}/sub?host=example.com&uuid=00000000-0000-4000-8000-000000000000`;
 	}
 	try {
-		const content = await cached_fetch_30(target_url, { signal: AbortSignal.timeout(5000) });
+		const content = await cached_fetch_30(...make_url_options(target_url, { signal: AbortSignal.timeout(5000) }));
 		const txt = /[\.:]/.test(content) ? content : atob(content);
 		return parse_hostname_text(txt);
 	} catch (e) {
@@ -480,7 +500,7 @@ async function fetch_hostnames(target_url) {
 async function handle_home(url) {
 	const _url = url.hostname === '127.0.0.1' ? HOME_LOCAL : HOME_GITHUB;
 	try {
-		const text = await await cached_fetch_30(_url, { signal: AbortSignal.timeout(5000) });
+		const text = await await cached_fetch_30(...make_url_options(_url, { signal: AbortSignal.timeout(5000) }));
 		return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	} catch (e) {
 		console.log(e, _url);
@@ -491,7 +511,7 @@ async function handle_home(url) {
 async function handle_link(url) {
 	const _url = url.hostname === '127.0.0.1' ? LINK_LOCAL : LINK_GITHUB;
 	try {
-		const text = await await cached_fetch_30(_url, { signal: AbortSignal.timeout(5000) });
+		const text = await await cached_fetch_30(...make_url_options(_url, { signal: AbortSignal.timeout(5000) }));
 		return new Response(text, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	} catch (e) {
 		console.log(e, _url);
@@ -513,7 +533,7 @@ async function handle_link_api(url, request, env) {
 		const links = await get_links(env, LINKS_MAP);
 		LINKS_MAP = links;
 		if (!links || links.size === 0) return new Response('No data found', { status: 404 });
-		
+
 		const txt = JSON.stringify(Array.from(links.values()), null, 0);
 		return new Response(txt, { headers: { 'Content-Type': 'text/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
@@ -569,16 +589,28 @@ async function handle_s(url, request, env) {
 		if (item.type === 'text') {
 			// 直接返回 note 内容
 			return new Response(item.note || '', { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
-		} else if (item.type === 'proxy') {
-			// 转发到 link 的内容
-			try {
-				return await fetch(item.note, { signal: AbortSignal.timeout(25000) });
-			} catch (error) {
-				return new Response(`Prxoy failed: ${error.message}`, { status: 500 });
-			}
 		} else if (item.type === 'redirect') {
 			// 307 跳转到 link
 			return new Response(null, { status: 307, headers: { 'Location': item.note } });
+		} else if (item.type === 'concat') {
+			const urls = parse_new_line(item.note);
+			const fetchPromises = urls.map(url => fetch(...make_url_options(url, { signal: AbortSignal.timeout(5000) })));
+
+			// 等待所有请求完成，无论成功与否
+			const results = await Promise.allSettled(fetchPromises);
+
+			// 处理结果
+			const data = [];
+			for (const result of results) {
+				if (result.status === 'fulfilled') {
+					// 请求成功
+					data.push(await result.value.text());
+				} else {
+					// 请求失败，可记录日志或放入占位符
+					console.error('Fetch failed:', result.reason);
+				}
+			}
+			return new Response(data.join('\n'), { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 		} else {
 			return new Response(`Unknown type: ${item.type}`, { status: 400 });
 		}
@@ -939,7 +971,7 @@ async function handle_sub(url, request) {
 	// console.log(ua);
 	let filename = url.searchParams.get('filename');
 	try {
-		const content = await cached_fetch_30(_url, { signal: AbortSignal.timeout(5000) });
+		const content = await cached_fetch_30(...make_url_options(_url, { signal: AbortSignal.timeout(5000) }));
 		const txt = content.includes('.') ? content : atob(content);
 		const clash = ClashObj(parse_new_line(txt).map(line => ProxyUrlToClash(line, { skipCertVerify: scv })));
 		const yaml = SimpleYAML.stringify(clash);
@@ -1068,7 +1100,6 @@ export default {
 		if (url.pathname.startsWith('/s/')) {
 			return await handle_s(url, request, env);
 		}
-		// env.KV.delete("link.json");
 
 		switch (url.pathname) {
 			case '/fetch':
@@ -1087,7 +1118,6 @@ export default {
 				return await handle_link_api(url, request, env);
 			case '/sub':
 				return await handle_sub(url, request);
-
 			default:
 				return new Response('Hello World!');
 		}
