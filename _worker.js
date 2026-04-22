@@ -534,40 +534,64 @@ async function handle_link_edit(url, request, env) {
 		});
 	}
 
-	const STORAGE = env.KV;
-	if (!STORAGE) return new Response('No KV storage available', { status: 500 });
-
 	const method = request.method;
 	if (method === 'GET') {
-		const txt = await STORAGE.get('link.json') || "[]";
+		const links = await get_links(env, LINKS_MAP);
+		LINKS_MAP = links;
+		if (!links || links.size === 0) return new Response('No data found', { status: 404 });
+		
+		const txt = JSON.stringify(Array.from(links.values()), null, 0);
 		return new Response(txt, { headers: { 'Content-Type': 'text/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
 	if (method === 'POST') {
 		const data = await request.json();
-		const txt = JSON.stringify(data)
-		await STORAGE.put('link.json', txt);
+		const txt = await set_links(env, data);
+		LINKS_MAP = await new Map(data.map(item => [item.pathname, item]));
 		return new Response(txt, { headers: { 'Content-Type': 'text/json; charset=utf-8', 'Cache-Control': 'no-store', 'Expires': '0' } });
 	}
 }
 
-async function handle_s(url, request, env) {
-	const STORAGE = env.KV;
-	if (!STORAGE) return new Response('No KV storage available', { status: 500 });
-	const data = await STORAGE.get('link.json', { type: 'json' });
+// 重要：注意Map和{}的区别
+let LINKS_MAP = null;
 
-	if (!data) {
-		return new Response('No data found', { status: 404 });
-	}
+async function get_links(env, map) {
+	const STORAGE = env.KV;
+	if (!STORAGE) return null;
+
+	if (map) return map;
+
+	const data = await STORAGE.get('link.json', { type: 'json' });
+	console.log('get links for KV');
+	if (!data) return null;
+
+	return new Map(data.map(item => [item.pathname, item]));
+}
+
+async function set_links(env, links) {
+	const STORAGE = env.KV;
+	if (!STORAGE) return "[]";
+
+	if (!links) return "[]";
+
+	if (links instanceof Map) links = Array.from(links.values());
+
+	const txt = JSON.stringify(links, null, 0);
+
+	await STORAGE.put('link.json', txt);
+	console.log('put links to KV');
+	return txt;
+}
+
+async function handle_s(url, request, env) {
+	const links = await get_links(env, LINKS_MAP);
+	LINKS_MAP = links;
+	if (!links || links.size === 0) return new Response('No data found', { status: 404 });
 
 	const pathname = url.pathname;
+	const item = links.get(pathname);
+	if (!item) return new Response('Link not found', { status: 404 });
 
 	if (request.method === 'GET') {
-		const index = data.findIndex(item => item.pathname === pathname);
-		if (index === -1) {
-			return new Response('Link not found', { status: 404 });
-		}
-
-		const item = data[index];
 		if (item.type === 'text') {
 			// 直接返回 note 内容
 			return new Response(item.note || '', { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
@@ -593,10 +617,6 @@ async function handle_s(url, request, env) {
 			headers: { 'WWW-Authenticate': 'Bearer' }
 		});
 	}
-	const index = data.findIndex(item => item.pathname === pathname);
-	if (index === -1) {
-		return new Response('Link not found', { status: 404 });
-	}
 
 	if (request.method === 'PUT') {
 		// 根据 Content-Type 处理不同格式
@@ -608,26 +628,26 @@ async function handle_s(url, request, env) {
 			let updateData;
 			try {
 				updateData = JSON.parse(text);
-				data[index] = {
-					...data[index],
+				links.set(pathname, {
+					...item,
 					...updateData // 可以把不喜欢的链接也给换了
-				};
+				});
 			} catch (error) {
 				return new Response('Invalid JSON: ' + error, { status: 400 });
 			}
 		} else if (contentType.includes('text/plain')) {
 			// 纯文本格式 - 直接作为 note 内容
 			const textContent = await request.text();
-			data[index] = {
-				...data[index],
+			links.set(pathname, {
+				...item,
 				note: textContent,
-			};
+			});
 		} else {
 			return new Response('Unsupported Content-Type', { status: 400 });
 		}
 
-		// 保存回 KV
-		await STORAGE.put('link.json', JSON.stringify(data, null, 0));
+		LINKS_MAP = links;
+		await set_links(env, LINKS_MAP);
 
 		return new Response(
 			JSON.stringify({
@@ -1103,5 +1123,4 @@ export default {
 		}
 	},
 };
-
 
