@@ -127,6 +127,7 @@ class SimpleYAML {
 	}
 }
 
+// 超时缓存装饰器
 function withTimeoutCache(fn, options = {}) {
 	const {
 		maxSize = 100,
@@ -187,6 +188,7 @@ function cleanupSomeExpired(cache, ttl, now, maxCount) {
 	}
 }
 
+// 创建URL和选项。为_ua参数
 function make_url_options(url, options = {}) {
 	if (!url) return '';
 	const _url = new URL(url);
@@ -195,13 +197,12 @@ function make_url_options(url, options = {}) {
 		_url.searchParams.delete('_ua');
 		if (options.headers) {
 			options.headers = { ...options.headers, 'User-Agent': _ua };
-		}
-		else {
+		} else {
 			options.headers = { 'User-Agent': _ua };
 		}
 		console.log('make_url_options', _url.href, options);
 	}
-	
+
 	return [_url.href, options];
 }
 
@@ -722,7 +723,6 @@ function VlessTrojanAnytlsHysteria2ToClash(vlessUrl, options = {}) {
 			node.password = url.username;
 		}
 
-
 		// 处理 encryption 字段
 		const encryption = params.get('encryption');
 		if (encryption && encryption !== 'none') {
@@ -753,13 +753,51 @@ function VlessTrojanAnytlsHysteria2ToClash(vlessUrl, options = {}) {
 			};
 		}
 
-		// 处理 ALPN 参数
+		// 3. 处理 ALPN 参数
 		const alpn = params.get('alpn');
 		if (alpn) {
 			node.alpn = alpn.split(','); // 转为数组格式：['h2', 'http/1.1']
 		}
 
-		// 3. 处理安全层扩展 (Reality / ECH)
+		// TODO AI写的，未测
+		// 4. 处理分片 (Fragment) 参数
+		const fragment = params.get('fragment');
+		if (fragment) {
+			// 解析 fragment 参数，格式如: "1,40-60,30-50,tlshello" 或 "1-3,100-200,20-30"
+			const fragmentParts = fragment.split(',');
+
+			// 确保有足够的参数
+			if (fragmentParts.length >= 3) {
+				// 解析每个部分
+				const packets = fragmentParts[0]; // 分片包范围，如 "1" 或 "1-3"
+				const length = fragmentParts[1];  // 分片长度范围，如 "40-60"
+				const interval = fragmentParts[2]; // 发送间隔范围，如 "30-50"
+
+				// 构建 fragment 配置对象
+				node.smux = {
+					enabled: true,
+					fragment: {
+						packets: packets,
+						length: length,
+						interval: interval
+					}
+				};
+
+				// 处理可选的第四个参数（tlshello/packets）
+				if (fragmentParts.length >= 4) {
+					const option = fragmentParts[3].toLowerCase();
+					if (option === 'tlshello' || option === 'tls') {
+						// 如果是 TLS 握手包分片
+						node.smux.fragment.tls = true;
+					} else {
+						// 如果是具体的包范围说明，更新 packets
+						node.smux.fragment.packets = option;
+					}
+				}
+			}
+		}
+
+		// 5. 处理安全层扩展 (Reality / ECH)
 		const security = params.get('security');
 		if (security === 'reality') {
 			node['reality-opts'] = {
@@ -799,7 +837,6 @@ function VlessTrojanAnytlsHysteria2ToClash(vlessUrl, options = {}) {
 		throw new Error(`Vless/Trojan/Anytls/Hysteria2解析失败: ${error.message} ${vlessUrl}`);
 	}
 }
-
 function VmessToClash(vmessUrl, options = {}) {
 	try {
 		const config = JSON.parse(atob(vmessUrl.substring(8)));
@@ -858,6 +895,10 @@ function VmessToClash(vmessUrl, options = {}) {
 function TuicToClash(tuicUrl, options = {}) {
 	try {
 		const url = new URL(tuicUrl);
+		// TODO 目前v2ray默认导出格式不对，需手工处理一下
+		if (url.username.includes('%3A')) [url.username, url.password] = url.username.split('%3A');
+
+
 		const params = url.searchParams;
 
 		// 基础信息提取
@@ -867,7 +908,7 @@ function TuicToClash(tuicUrl, options = {}) {
 			server: url.hostname,
 			port: parseInt(url.port) || 443,
 			uuid: url.username,
-			password: url.password, // 目前v2ray导出的格式对: 没有正确处理，需手工处理一下
+			password: url.password,
 			'congestion-controller': params.get('congestion_control') || params.get('congestion-control') || 'cubic',
 			'udp-relay-mode': params.get('udp_relay_mode') || params.get('udp-relay-mode') || 'native',
 			'disable-sni': params.get('disable_sni') === '1' || params.get('disable-sni') === '1' || false,
@@ -1038,8 +1079,40 @@ function ClashObj(proxies) {
 		"allow-lan": true,
 		mode: "rule",
 		"log-level": "info",
+		"unified-delay": true,
 		"global-client-fingerprint": "firefox",
-		"external-controller": ":9090",
+		"external-controller": "127.0.0.1:9090",
+		// TODO DNS是否合适未测试
+		dns: {
+			enable: true,
+			ipv6: true,
+			"enhanced-mode": 'fake-ip',
+			"fake-ip-range": "198.18.0.1/16",
+			"fake-ip-filter": [
+				"geosite:connectivity-check",
+				"geosite:private",
+			],
+			"default-nameserver": [
+				"223.5.5.5",
+				"114.114.114.114",
+				"8.8.8.8",
+			],
+			"nameserver": [
+				"https://doh.pub/dns-query",
+				"https://dns.alidns.com/dns-query",
+			],
+			"fallback": [
+				"tls://1.1.1.1",
+				"tls://dns.google",
+			],
+			"fallback-filter": {
+				geoip: true,
+				'geoip-code': 'CN',
+				ipcidr: [
+					"240.0.0.0/4",
+				]
+			}
+		},
 		proxies: [],
 		"proxy-groups": [
 			{
