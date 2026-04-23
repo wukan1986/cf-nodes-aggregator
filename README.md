@@ -145,7 +145,9 @@ https://zhuanlan.zhihu.com/p/3739662610
 2. [byJoey/cfnew](https://github.com/byJoey/cfnew)
 3. [hc990275/sub](https://github.com/hc990275/sub)
 4. [alienwaregf/Cloudflare-Country-Specific-IP-Filter](https://github.com/alienwaregf/Cloudflare-Country-Specific-IP-Filter)
-4. [DaBoWin/cfssclash](https://github.com/DaBoWin/cfssclash)
+5. [DaBoWin/cfssclash](https://github.com/DaBoWin/cfssclash)
+6. [yonggekkk/Cloudflare-vless-trojan](https://github.com/yonggekkk/Cloudflare-vless-trojan)
+7. [Cloudflare EDT 导航](https://bestcf.pages.dev/)
 
 
 感谢各位大佬提供的代码和服务
