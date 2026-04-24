@@ -68,20 +68,20 @@ async function handleWebSocket(request) {
             const type = view.getUint8(pos + 3);
             pos += 4;
 
-            let addr = '';
+            let hostname = '';
             if (type === 1) {
-                addr = [...data.slice(pos, pos + 4)].join('.');
+                hostname = [...data.slice(pos, pos + 4)].join('.');
                 pos += 4;
             } else if (type === 2) {
                 const len = view.getUint8(pos++);
-                addr = new TextDecoder().decode(data.slice(pos, pos + len));
+                hostname = new TextDecoder().decode(data.slice(pos, pos + len));
                 pos += len;
             } else if (type === 3) {
                 const ipv6 = [];
                 for (let i = 0; i < 8; i++, pos += 2) ipv6.push(view.getUint16(pos).toString(16));
-                addr = ipv6.join(':');
+                hostname = ipv6.join(':');
             } else return;
-            console.log(`cmd:${cmd}, type:${type} -> ${addr}:${port}`);
+            console.log(`cmd:${cmd}, type:${type} -> ${hostname}:${port}`);
 
             const header = new Uint8Array([version, 0]);
             const payload = data.slice(pos);
@@ -130,25 +130,26 @@ async function handleWebSocket(request) {
                 }));
                 udpWriter = writable.getWriter();
                 return udpWriter.write(payload);
-            }
-            // TCP连接
-            let sock = null;
-            try {
-                sock = connect({ hostname: addr, port: port });
-                await sock.opened;
-            } catch {
-                // TODO 这里加反代
-                await sock.opened;
-            }
-            if (!sock) return;
-            remote = sock;
-            await SocketWrite(sock, payload);
+            } else {
+                // TCP连接
+                let sock = null;
+                try {
+                    sock = connect({ hostname, port });
+                    await sock.opened;
+                } catch {
+                    // TODO 这里加反代
+                    await sock.opened;
+                }
+                if (!sock) return;
+                remote = sock;
+                await SocketWrite(sock, payload);
 
-            sock.readable.pipeTo(new WritableStream({
-                write(chunk) { if (ws.readyState === WebSocket.OPEN) { ws.send(chunk); } },
-                close: () => { closeSocketQuietly(ws); },
-                abort: () => { closeSocketQuietly(ws); },
-            })).catch(() => { });
+                sock.readable.pipeTo(new WritableStream({
+                    write(chunk) { if (ws.readyState === WebSocket.OPEN) { ws.send(chunk); } },
+                    close: () => { closeSocketQuietly(ws); },
+                    abort: () => { closeSocketQuietly(ws); },
+                })).catch(() => { });
+            }
         },
     })).catch(() => { });
 
