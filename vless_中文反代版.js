@@ -5,8 +5,8 @@ export default {
 		const 读取我的请求标头 = 访问请求.headers.get('Upgrade');
 		const url = new URL(访问请求.url);
 		if (读取我的请求标头 === 'websocket') {
-			if (url.searchParams.has('proxyip')) {
-				反代IP = url.searchParams.get('proxyip').replace('colo', 访问请求.cf.colo).toLowerCase();
+			if (url.searchParams.has('ip')) {
+				反代IP = url.searchParams.get('ip').replace('colo', 访问请求.cf.colo).toLowerCase();
 			}
 			return await 升级WS请求();
 		}
@@ -73,8 +73,8 @@ async function 启动传输管道(WS接口) {
 			TCP接口 = connect({ hostname: 访问地址, port: 访问端口 });
 			await TCP接口.opened;
 		} catch {
-			const [反代IP地址, 反代IP端口 = 访问端口] = 反代IP.split(':');
-			TCP接口 = connect({ hostname: 反代IP地址, port: 反代IP端口 });
+			const [反代IP地址, 反代IP端口] = 反代IP.split(':');
+			TCP接口 = connect({ hostname: 反代IP地址, port: parseInt(反代IP端口 || `${访问端口}`, 10) });
 			await TCP接口.opened;
 		}
 		建立传输管道(写入初始数据);
