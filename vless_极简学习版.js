@@ -1,5 +1,4 @@
-﻿// 极简 VLESS over WebSocket 实现 for Cloudflare Workers
-// TODO 在v2rayN上测试，支持xray，不支持singbox
+﻿// TODO 在v2rayN上测试，支持xray，不支持singbox
 import { connect } from 'cloudflare:sockets';
 const uuid = '12345678-1234-1234-1234-123456789012';
 const _UUID = uuidToArray(uuid);
