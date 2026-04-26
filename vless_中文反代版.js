@@ -73,8 +73,8 @@ async function 启动传输管道(WS接口) {
 			TCP接口 = connect({ hostname: 访问地址, port: 访问端口 });
 			await TCP接口.opened;
 		} catch {
-			const [反代IP地址, 反代IP端口] = 反代IP.split(':');
-			TCP接口 = connect({ hostname: 反代IP地址, port: parseInt(反代IP端口 || `${访问端口}`, 10) });
+			const [反代IP地址, 反代IP端口 = 访问端口] = 反代IP.split(':');
+			TCP接口 = connect({ hostname: 反代IP地址, port: +反代IP端口 });
 			await TCP接口.opened;
 		}
 		建立传输管道(写入初始数据);
